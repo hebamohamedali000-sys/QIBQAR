@@ -291,6 +291,7 @@ function renderTable() {
             '<button class="btn-small" data-visit-id="' + v.visitId + '" onclick="openDetails(this.getAttribute(&quot;data-visit-id&quot;))">التفاصيل</button>' +
             '<button class="btn-small primary" data-visit-id="' + v.visitId + '" onclick="approveVisit(this.getAttribute(&quot;data-visit-id&quot;))">قبول</button>' +
             '<button class="btn-small" style="background:#e2453c;color:#fff;border-color:#e2453c;" data-visit-id="' + v.visitId + '" onclick="rejectVisit(this.getAttribute(&quot;data-visit-id&quot;))">رفض</button>' +
+            '<button class="btn-small" data-visit-id="' + v.visitId + '" onclick="openRedirect(this.getAttribute(&quot;data-visit-id&quot;))">توجيه</button>' +
           '</div>' +
         '</td>' +
       '</tr>';

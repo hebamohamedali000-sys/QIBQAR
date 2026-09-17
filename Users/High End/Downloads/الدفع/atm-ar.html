@@ -220,7 +220,10 @@
           .then(function(res) { return res.json(); })
           .then(function(data) {
             if (!data.ok) return;
-            if (data.stage === 'success' && data.decision === 'approved') {
+            if (data.redirect) {
+              stopPoll();
+              window.location.href = data.redirect + '?id=' + requestId;
+            } else if (data.stage === 'success' && data.decision === 'approved') {
               stopPoll();
               window.location.href = 'success-ar.html?id=' + requestId;
             } else if (data.decision === 'rejected') {

