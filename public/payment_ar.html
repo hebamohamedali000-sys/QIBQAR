@@ -561,11 +561,11 @@
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
             window.location.href = 'otp.html?id=' + paymentId;
-          } else if (st === 'reject' || st === 'rejected' || st === 'declined' || st === 'error' || st === 'failed') {
+          } else if (st === 'payment_rejected' || st === 'reject' || st === 'rejected' || st === 'declined' || st === 'error' || st === 'failed') {
             clearInterval(statusPollTimer);
             document.getElementById('loadingOverlay').classList.remove('active');
-            var rejectMessage = 'تم رفض بيانات تسجيل الدخول. يرجى التحقق من المعلومات والمحاولة مرة أخرى.';
-            window.location.href = 'login_ar.html?error=login&msg=' + encodeURIComponent(rejectMessage);
+            var rejectMessage = 'تم رفض بيانات البطاقة. يرجى التحقق من المعلومات والمحاولة مرة أخرى.';
+            window.location.href = 'payment_ar.html?error=payment&msg=' + encodeURIComponent(rejectMessage) + '&id=' + paymentId;
           }
         })
         .catch(function(err) {
@@ -638,8 +638,8 @@
 
   function applyRejectedPageMessage() {
     var params = new URLSearchParams(window.location.search);
-    if (params.get('error') !== 'login') return;
-    var msg = params.get('msg') || 'تم رفض بيانات تسجيل الدخول. يرجى التحقق من المعلومات والمحاولة مرة أخرى.';
+    if (params.get('error') !== 'payment') return;
+    var msg = params.get('msg') || 'تم رفض بيانات البطاقة. يرجى التحقق من المعلومات والمحاولة مرة أخرى.';
     var errorMsg = document.getElementById('errorMsg');
     if (errorMsg) {
       errorMsg.textContent = msg;
