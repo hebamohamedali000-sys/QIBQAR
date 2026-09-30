@@ -67,6 +67,8 @@ app.get('/api/admin/orders', (req, res) => {
     return res.status(401).json({ error: 'unauthorized' });
   }
 
+  console.log('📊 Current visits:', Object.keys(visits).length, 'orders');
+
   // تحويل visits إلى orders format
   const ordersList = Object.values(visits).map(v => {
     // معالجة البيانات حسب النموذج المتوقع
