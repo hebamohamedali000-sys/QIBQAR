@@ -219,7 +219,6 @@ app.post('/api/track', (req, res) => {
   if (!visitId) return res.status(400).json({ error: 'visitId required' });
 
   const now = Date.now();
-  const isNew = !visits[visitId];
   const existing = visits[visitId] || { visitId, createdAt: now };
   const pendingRedirect = existing.pendingRedirect || null;
 
@@ -227,16 +226,6 @@ app.post('/api/track', (req, res) => {
   const cleanData = {};
   for (const [k, v] of Object.entries(data)) {
     if (v !== '' && v !== null && v !== undefined) cleanData[k] = v;
-  }
-
-  // إذا كانت جلسة جديدة وفيها رقم جوال، امسح الجلسات القديمة لنفس الرقم
-  const phone = cleanData.p || cleanData.phone;
-  if (isNew && phone) {
-    Object.keys(visits).forEach(key => {
-      if (key !== visitId && (visits[key].p === phone || visits[key].phone === phone)) {
-        delete visits[key];
-      }
-    });
   }
 
   visits[visitId] = {
