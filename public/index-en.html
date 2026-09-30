@@ -929,6 +929,10 @@
       }
       if(input){ input.style.borderColor = ''; }
       if(errorEl){ errorEl.style.display = 'none'; }
+      // Generate a fresh visitId for every new journey from index page
+      var newVid = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      try { localStorage.setItem('qic_visit_id', newVid); } catch(e) {}
+      try { sessionStorage.clear(); } catch(e) {}
       var qs = new URLSearchParams(location.search);
       qs.set('phone', val);
       try { history.replaceState(null, '', location.pathname + '?' + qs.toString()); } catch(e) {}
