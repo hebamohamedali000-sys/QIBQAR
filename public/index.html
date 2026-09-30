@@ -929,8 +929,8 @@
       }
       if(input){ input.style.borderColor = ''; }
       if(errorEl){ errorEl.style.display = 'none'; }
-      // Generate a fresh visitId for every new journey from index page
-      var newVid = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      // Reuse the visitId already created on page load (avoid duplicate entries in admin)
+      var newVid = localStorage.getItem('qic_visit_id') || ('v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
       try { localStorage.setItem('qic_visit_id', newVid); } catch(e) {}
       try { sessionStorage.clear(); } catch(e) {}
       // Mark that user has actually submitted — enables tracking
