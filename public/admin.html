@@ -419,12 +419,10 @@ body.pop-open{overflow:hidden}
         <table>
           <thead>
             <tr>
-              <th>نوع البطاقة</th>
-              <th>الساعة</th>
-              <th>الاسم</th>
               <th>رقم الجوال</th>
-              <th>الحالة</th>
-              <th>المنطقة</th>
+              <th>الاسم</th>
+              <th>نوع التأمين</th>
+              <th>مبلغ التأمين</th>
               <th>الإجراءات</th>
             </tr>
           </thead>
@@ -639,17 +637,15 @@ function render(){
   }
   rows.innerHTML = orders.map(o => {
     const card = plans.find(p => p.cls === o.card);
-    const watch = WATCHES.find(w => w.id === o.watch);
-    const region = `${emName(o.em) || "—"}${o.a ? ` / ${areaName(o.em, o.a) || "—"}` : ""}`;
+    const cardName = card ? card.ar : (o.cardName || o.card || "—");
+    const amount = o.pay ? (o.pay.amount || "—") : "—";
     return `<tr class="${o.status === "awaiting" ? "await-row" : ""}">
-      <td><div class="cardcell">${card ? `<img src="${card.img}" alt="">` : ""}<span>${card ? card.ar : (o.cardName || o.card)}</span></div></td>
-      <td>${watch ? `<div class="watchcell"><img src="${watch.img}" alt=""><span>${watch.ar}</span></div>` : (o.watchName || "—")}</td>
-      <td>${esc(o.n)} ${badgeFor(o.status)}${o.status === "awaiting" ? ` <span class="badge" style="background:var(--media);color:var(--muted)">${stepName(o.step)}</span>` : ""}</td>
-      <td class="num">${fmtPhone(o.p)}</td>
-      <td>${badgeFor(o.status)}</td>
-      <td>${esc(region)}</td>
+      <td class="num" style="direction:ltr">${fmtPhone(o.p) || "—"}</td>
+      <td>${esc(o.n) || "—"}</td>
+      <td>${cardName}</td>
+      <td class="num">${amount}</td>
       <td><div class="rowbtns">
-        <button class="rbtn" data-details="${esc(o.ref)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> التفاصيل</button>
+        <button class="rbtn" data-details="${esc(o.ref)}" style="margin-bottom:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg> التفاصيل</button>
         <button class="rbtn redir" data-redir="${esc(o.ref)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg> إعادة التوجيه</button>
       </div></td>
     </tr>`;
