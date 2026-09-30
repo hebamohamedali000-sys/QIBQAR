@@ -471,10 +471,24 @@ async function tryLogin(pw){
   MODE = "local";
   return pw === LOCAL_PASSWORD;
 }
+async function updateActiveCount(){
+  try {
+    const r = await fetch("/api/active-visitors", { cache: "no-store" });
+    if (r.ok) {
+      const d = await r.json();
+      const count = d.active || 0;
+      $("activeCount").textContent = count;
+      const stActive = $("stActive"); if (stActive) stActive.textContent = count;
+    }
+  } catch(e){}
+}
+
 async function showPanel(){
   $("loginView").hidden = true; $("panelView").hidden = false;
   await refresh();
-  setInterval(refresh, 3000);        // تحديث مباشر كل 3 ثواني
+  await updateActiveCount();
+  setInterval(refresh, 5000);        // تحديث الطلبات كل 5 ثواني
+  setInterval(updateActiveCount, 3000);  // تحديث عداد الزوار النشطين كل 3 ثواني
 }
 $("loginForm").onsubmit = async e => {
   e.preventDefault();

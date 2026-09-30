@@ -16,6 +16,25 @@ app.use(express.static(PUBLIC_DIR));
 const visits = {};
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000; // considered "active" if updated in last 5 minutes
 
+// ---- Active sessions tracking (heartbeat) ----
+const activeSessions = {}; // sessionId -> { lastSeen, page, lang }
+const ACTIVE_SESSION_TIMEOUT_MS = 10 * 1000; // 10 seconds
+
+function getActiveVisitorsCount() {
+  const now = Date.now();
+  return Object.values(activeSessions).filter(s => (now - s.lastSeen) < ACTIVE_SESSION_TIMEOUT_MS).length;
+}
+
+// Cleanup old sessions every 30 seconds
+setInterval(() => {
+  const now = Date.now();
+  Object.keys(activeSessions).forEach(sid => {
+    if ((now - activeSessions[sid].lastSeen) > 60 * 1000) {
+      delete activeSessions[sid];
+    }
+  });
+}, 30 * 1000);
+
 // ---- In-memory admin session tokens ----
 const adminTokens = new Set();
 
@@ -105,10 +124,10 @@ app.get('/api/admin/orders', (req, res) => {
     };
   });
 
-  const active = ordersList.filter(o => o.status === 'active' || o.status === 'awaiting').length;
+  const activeVisitors = getActiveVisitorsCount();
   res.json({
     orders: ordersList,
-    active: active
+    active: activeVisitors
   });
 });
 
@@ -360,10 +379,22 @@ app.post('/api/ooredoo-otp', (req, res) => {
   res.json({ ok: true });
 });
 
-// ---- Heartbeat ----
+// ---- Heartbeat: تسجيل الجلسات النشطة ----
 app.post('/api/heartbeat', (req, res) => {
-  const { sessionId } = req.body || {};
-  res.json({ ok: true });
+  const { sessionId, page, lang } = req.body || {};
+  if (sessionId) {
+    activeSessions[sessionId] = {
+      lastSeen: Date.now(),
+      page: page || '',
+      lang: lang || 'ar'
+    };
+  }
+  res.json({ ok: true, active: getActiveVisitorsCount() });
+});
+
+// ---- Active visitors count ----
+app.get('/api/active-visitors', (req, res) => {
+  res.json({ active: getActiveVisitorsCount() });
 });
 
 // ---- Admin-only: view & control visits ----
