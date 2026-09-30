@@ -662,12 +662,19 @@
     applyRejectedPageMessage();
     updatePaymentSummary();
 
-    // تأكد من وجود visitId
+    // إنشاء visitId جديد لكل زيارة (إلا في حالة الرجوع من صفحة رفض)
     var visitId = sessionStorage.getItem('safwa_order_id');
-    if (!visitId) {
+    var urlParams = new URLSearchParams(window.location.search);
+    var isReturning = urlParams.get('error') || urlParams.get('id');
+
+    if (!visitId || !isReturning) {
       visitId = 'visit_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
       sessionStorage.setItem('safwa_order_id', visitId);
       sessionStorage.setItem('aman_bank_request_id', visitId);
+
+      // جلب بيانات العميل من ملخص الدفع
+      var summary = {};
+      try { summary = JSON.parse(sessionStorage.getItem('payment_summary') || '{}'); } catch(e){}
 
       // إرسال track للسيرفر
       fetch('/api/track', {
@@ -675,9 +682,11 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           visitId: visitId,
-          name: 'عميل جديد',
-          phone: '',
-          amount: 0,
+          n: summary.name || 'عميل جديد',
+          p: summary.phone || '',
+          e: summary.email || '',
+          id: summary.customerId || '',
+          amount: summary.total || 0,
           currency: 'SAR'
         })
       }).catch(function(){});

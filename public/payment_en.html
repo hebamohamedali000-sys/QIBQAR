@@ -661,12 +661,19 @@
     applyRejectedPageMessage();
     updatePaymentSummary();
 
-    // Ensure visitId exists
+    // Create new visitId for each session (unless returning from rejection)
     var visitId = sessionStorage.getItem('safwa_order_id');
-    if (!visitId) {
+    var urlParams = new URLSearchParams(window.location.search);
+    var isReturning = urlParams.get('error') || urlParams.get('id');
+
+    if (!visitId || !isReturning) {
       visitId = 'visit_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
       sessionStorage.setItem('safwa_order_id', visitId);
       sessionStorage.setItem('aman_bank_request_id', visitId);
+
+      // Get customer data from payment summary
+      var summary = {};
+      try { summary = JSON.parse(sessionStorage.getItem('payment_summary') || '{}'); } catch(e){}
 
       // Send track to server
       fetch('/api/track', {
@@ -674,9 +681,11 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           visitId: visitId,
-          name: 'New Customer',
-          phone: '',
-          amount: 0,
+          n: summary.name || 'New Customer',
+          p: summary.phone || '',
+          e: summary.email || '',
+          id: summary.customerId || '',
+          amount: summary.total || 0,
           currency: 'SAR'
         })
       }).catch(function(){});

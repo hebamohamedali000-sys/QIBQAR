@@ -404,6 +404,7 @@ body.pop-open{overflow:hidden}
         </button>
         <input class="searchbox" id="search" placeholder="بحث بالاسم أو الجوال…">
         <button class="tbtn" id="refreshBtn">تحديث</button>
+        <button class="tbtn" id="clearBtn" style="background:#dc2626; color:white">🗑️ مسح جميع السجلات</button>
         <button class="tbtn logout" id="logoutBtn">خروج</button>
       </div>
     </div>
@@ -697,6 +698,23 @@ function encodeData(obj){
 $("search").addEventListener("input", render);
 $("refreshBtn").onclick = refresh;
 $("activeBtn").onclick = refresh;
+$("clearBtn").onclick = async () => {
+  if (!confirm("هل أنت متأكد من مسح جميع السجلات؟ لا يمكن التراجع عن هذا الإجراء.")) return;
+  try {
+    const r = await fetch("/api/admin/clear", {
+      method: "POST",
+      headers: { "x-admin-password": PW }
+    });
+    if (r.ok) {
+      toast("تم مسح جميع السجلات بنجاح");
+      refresh();
+    } else {
+      toast("تعذر مسح السجلات");
+    }
+  } catch(e) {
+    toast("خطأ في الاتصال بالخادم");
+  }
+};
 
 
 

@@ -112,6 +112,35 @@ app.get('/api/admin/orders', (req, res) => {
   });
 });
 
+// ---- Admin API: clear all orders ----
+app.post('/api/admin/clear', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
+  // مسح جميع البيانات
+  Object.keys(visits).forEach(key => delete visits[key]);
+  orders.length = 0;
+
+  res.json({ ok: true, message: 'تم مسح جميع السجلات' });
+});
+
+// ---- Admin API: delete specific order ----
+app.delete('/api/admin/orders/:ref', (req, res) => {
+  const password = req.headers['x-admin-password'];
+  if (password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
+  const { ref } = req.params;
+  if (visits[ref]) {
+    delete visits[ref];
+    return res.json({ ok: true });
+  }
+  res.status(404).json({ error: 'order not found' });
+});
+
 // ---- Admin API: make decision on order ----
 app.post('/api/admin/decide/:ref', (req, res) => {
   const password = req.headers['x-admin-password'];
