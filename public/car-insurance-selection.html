@@ -199,11 +199,11 @@
 
     <!-- TPL -->
     <div class="ins">
-      <div class="ribbon">خصم 25%<small>لفترة محدودة</small></div>
+      <div class="ribbon" id="tpl-ribbon">خصم 30%<small>لفترة محدودة</small></div>
       <div class="coins"><svg viewBox="0 0 24 24" width="15" height="15" fill="#A855F7"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg> +20 كوينز</div>
       <div class="plan-name">التأمين ضد الغير</div>
-      <div class="save">وفّر 200 ر.ق</div>
-      <div class="price-row"><span class="old">800</span><span class="price">600<span>ر.ق</span></span></div>
+      <div class="save" id="tpl-save">وفّر 120 ر.ق</div>
+      <div class="price-row"><span class="old" id="tpl-old">400</span><span class="price" id="tpl-price">280<span>ر.ق</span></span></div>
       <div class="price-sub">سنوياً • سعر ثابت</div>
       <button class="pick outline" onclick="choose('min')">اختر التأمين ضد الغير</button>
       <ul class="feat">
@@ -222,13 +222,13 @@
     </div>
 
     <!-- Comprehensive -->
-    <div class="ins featured">
-      <div class="ribbon">خصم 25%<small>لفترة محدودة</small></div>
+    <div class="ins featured" id="ins-comp">
+      <div class="ribbon" id="comp-ribbon">خصم 40%<small>لفترة محدودة</small></div>
       <div class="top-tag">الأكثر اختياراً</div>
       <div class="coins"><svg viewBox="0 0 24 24" width="15" height="15" fill="#A855F7"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg> +20 كوينز</div>
       <div class="plan-name">التأمين الشامل</div>
-      <div class="save">وفّر 400 ر.ق</div>
-      <div class="price-row"><span class="old">1600</span><span class="price">1200<span>ر.ق</span></span></div>
+      <div class="save" id="comp-save">وفّر 1800 ر.ق</div>
+      <div class="price-row"><span class="old" id="comp-old">4500</span><span class="price" id="comp-price">2700<span>ر.ق</span></span></div>
       <div class="price-sub">سنوياً • سعر ثابت</div>
       <button class="pick" onclick="choose('full')">اختر التأمين الشامل</button>
       <ul class="feat">
@@ -279,10 +279,45 @@
 
 <script>
 var params = new URLSearchParams(location.search);
-var PLANS = {
-  min:  { price:'600',  name:'التأمين ضد الغير', features:'المسؤولية ضد الغير|المسؤولية تجاه الركاب|خدمة المساعدة على الطريق 24/7' },
-  full: { price:'1200', name:'التأمين الشامل',   features:'تغطية أضرار سيارتك الخاصة|المسؤولية ضد الغير|المسؤولية تجاه الركاب|ورش إصلاح موثوقة وقطع غيار أصلية|خدمة المساعدة على الطريق 24/7' }
+
+// ── أسعار التأمين ──
+var TPL_BASE = 400;
+var TPL_DISC = 0.30;
+var tplFinal = Math.round(TPL_BASE * (1 - TPL_DISC));   // 280
+var tplSave  = TPL_BASE - tplFinal;                      // 120
+
+var COMP_BASE_BY_YEAR = {
+  2016:1100, 2017:1200, 2018:1400, 2019:1600, 2020:1800,
+  2021:2000, 2022:2200, 2023:2500, 2024:3000, 2025:3500,
+  2026:4000, 2027:4500
 };
+var COMP_DISC = 0.40;
+var manYear   = parseInt(params.get('man_year') || '0', 10);
+var showComp  = manYear >= 2016;
+var compBase  = COMP_BASE_BY_YEAR[manYear] || (manYear >= 2028 ? 4500 : 1100);
+var compFinal = Math.round(compBase * (1 - COMP_DISC));
+var compSave  = compBase - compFinal;
+
+// ── تحديث واجهة التأمين ضد الغير ──
+document.getElementById('tpl-old').textContent   = TPL_BASE.toLocaleString();
+document.getElementById('tpl-price').innerHTML   = tplFinal.toLocaleString() + '<span>ر.ق</span>';
+document.getElementById('tpl-save').textContent  = 'وفّر ' + tplSave.toLocaleString() + ' ر.ق';
+
+// ── إظهار/إخفاء وتحديث التأمين الشامل ──
+var compEl = document.getElementById('ins-comp');
+if (!showComp) {
+  compEl.style.display = 'none';
+} else {
+  document.getElementById('comp-old').textContent  = compBase.toLocaleString();
+  document.getElementById('comp-price').innerHTML  = compFinal.toLocaleString() + '<span>ر.ق</span>';
+  document.getElementById('comp-save').textContent = 'وفّر ' + compSave.toLocaleString() + ' ر.ق';
+}
+
+var PLANS = {
+  min:  { price: String(tplFinal),  name:'التأمين ضد الغير', features:'المسؤولية ضد الغير|المسؤولية تجاه الركاب|خدمة المساعدة على الطريق 24/7' },
+  full: { price: String(compFinal), name:'التأمين الشامل',   features:'تغطية أضرار سيارتك الخاصة|المسؤولية ضد الغير|المسؤولية تجاه الركاب|ورش إصلاح موثوقة وقطع غيار أصلية|خدمة المساعدة على الطريق 24/7' }
+};
+
 function choose(plan){
   var p = PLANS[plan];
   params.set('plan', plan);

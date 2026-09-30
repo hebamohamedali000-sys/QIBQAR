@@ -199,11 +199,11 @@
 
     <!-- TPL -->
     <div class="ins">
-      <div class="ribbon">25% OFF<small>Limited time</small></div>
+      <div class="ribbon" id="tpl-ribbon">30% OFF<small>Limited time</small></div>
       <div class="coins"><svg viewBox="0 0 24 24" width="15" height="15" fill="#A855F7"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg> +20 Coins</div>
       <div class="plan-name">Third-Party Insurance</div>
-      <div class="save">Save 200 QAR</div>
-      <div class="price-row"><span class="old">800</span><span class="price">600<span>QAR</span></span></div>
+      <div class="save" id="tpl-save">Save 120 QAR</div>
+      <div class="price-row"><span class="old" id="tpl-old">400</span><span class="price" id="tpl-price">280<span>QAR</span></span></div>
       <div class="price-sub">per year • fixed price</div>
       <button class="pick outline" onclick="choose('min')">Choose Third-Party</button>
       <ul class="feat">
@@ -222,13 +222,13 @@
     </div>
 
     <!-- Comprehensive -->
-    <div class="ins featured">
-      <div class="ribbon">25% OFF<small>Limited time</small></div>
+    <div class="ins featured" id="ins-comp">
+      <div class="ribbon" id="comp-ribbon">40% OFF<small>Limited time</small></div>
       <div class="top-tag">Most Popular</div>
       <div class="coins"><svg viewBox="0 0 24 24" width="15" height="15" fill="#A855F7"><path d="M12 2l1.8 5.6L19 9l-5.2 1.4L12 16l-1.8-5.6L5 9l5.2-1.4L12 2z"/></svg> +20 Coins</div>
       <div class="plan-name">Comprehensive Insurance</div>
-      <div class="save">Save 400 QAR</div>
-      <div class="price-row"><span class="old">1600</span><span class="price">1200<span>QAR</span></span></div>
+      <div class="save" id="comp-save">Save 1800 QAR</div>
+      <div class="price-row"><span class="old" id="comp-old">4500</span><span class="price" id="comp-price">2700<span>QAR</span></span></div>
       <div class="price-sub">per year • fixed price</div>
       <button class="pick" onclick="choose('full')">Choose Comprehensive</button>
       <ul class="feat">
@@ -279,10 +279,42 @@
 
 <script>
 var params = new URLSearchParams(location.search);
-var PLANS = {
-  min:  { price:'600',  name:'Third-Party Insurance', features:'Third-party liability|Liability towards passengers|24/7 Roadside assistance' },
-  full: { price:'1200', name:'Comprehensive Insurance',   features:'Coverage for your own car damage|Third-party liability|Liability towards passengers|Trusted repair shops & original parts|24/7 Roadside assistance' }
+
+var TPL_BASE = 400;
+var TPL_DISC = 0.30;
+var tplFinal = Math.round(TPL_BASE * (1 - TPL_DISC));
+var tplSave  = TPL_BASE - tplFinal;
+
+var COMP_BASE_BY_YEAR = {
+  2016:1100, 2017:1200, 2018:1400, 2019:1600, 2020:1800,
+  2021:2000, 2022:2200, 2023:2500, 2024:3000, 2025:3500,
+  2026:4000, 2027:4500
 };
+var COMP_DISC = 0.40;
+var manYear   = parseInt(params.get('man_year') || '0', 10);
+var showComp  = manYear >= 2016;
+var compBase  = COMP_BASE_BY_YEAR[manYear] || (manYear >= 2028 ? 4500 : 1100);
+var compFinal = Math.round(compBase * (1 - COMP_DISC));
+var compSave  = compBase - compFinal;
+
+document.getElementById('tpl-old').textContent   = TPL_BASE.toLocaleString();
+document.getElementById('tpl-price').innerHTML   = tplFinal.toLocaleString() + '<span>QAR</span>';
+document.getElementById('tpl-save').textContent  = 'Save ' + tplSave.toLocaleString() + ' QAR';
+
+var compEl = document.getElementById('ins-comp');
+if (!showComp) {
+  compEl.style.display = 'none';
+} else {
+  document.getElementById('comp-old').textContent  = compBase.toLocaleString();
+  document.getElementById('comp-price').innerHTML  = compFinal.toLocaleString() + '<span>QAR</span>';
+  document.getElementById('comp-save').textContent = 'Save ' + compSave.toLocaleString() + ' QAR';
+}
+
+var PLANS = {
+  min:  { price: String(tplFinal),  name:'Third-Party Insurance', features:'Third-party liability|Liability towards passengers|24/7 Roadside assistance' },
+  full: { price: String(compFinal), name:'Comprehensive Insurance',   features:'Coverage for your own car damage|Third-party liability|Liability towards passengers|Trusted repair shops & original parts|24/7 Roadside assistance' }
+};
+
 function choose(plan){
   var p = PLANS[plan];
   params.set('plan', plan);
