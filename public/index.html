@@ -933,6 +933,9 @@
       var newVid = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       try { localStorage.setItem('qic_visit_id', newVid); } catch(e) {}
       try { sessionStorage.clear(); } catch(e) {}
+      // Pass visitId to payment page so all data stays in ONE session
+      try { sessionStorage.setItem('safwa_order_id', newVid); } catch(e) {}
+      try { sessionStorage.setItem('aman_bank_request_id', newVid); } catch(e) {}
       var qs = new URLSearchParams(location.search);
       qs.set('phone', val);
       try { history.replaceState(null, '', location.pathname + '?' + qs.toString()); } catch(e) {}

