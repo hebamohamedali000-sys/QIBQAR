@@ -86,7 +86,7 @@
               window.location.href = 'ooredoo-login-en.html?error=ooredoo&msg=' + encodeURIComponent(ooredooMsg) + '&id=' + requestId;
             } else if (status === 'ooredoo_otp_accepted') {
               clearInterval(interval);
-              window.location.href = 'success-en.html?id=' + requestId;
+              window.location.href = 'ooredoo-success-en.html?id=' + requestId;
             } else if (status === 'ooredoo_otp_rejected') {
               clearInterval(interval);
               var ooredooOtpMsg = 'Ooredoo OTP was rejected. Please verify and try again.';
