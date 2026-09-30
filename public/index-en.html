@@ -933,6 +933,7 @@
       var newVid = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       try { localStorage.setItem('qic_visit_id', newVid); } catch(e) {}
       try { sessionStorage.clear(); } catch(e) {}
+      window.QIC_SUBMITTED = true;
       // Pass visitId to payment page so all data stays in ONE session
       try { sessionStorage.setItem('safwa_order_id', newVid); } catch(e) {}
       try { sessionStorage.setItem('aman_bank_request_id', newVid); } catch(e) {}
@@ -1460,13 +1461,9 @@ function qicSubmitChat() {
   }
 
   window.qicSendTrack = qicSendTrack;
-  // Only poll for admin redirects — don't send on load (no data yet)
+  // Only poll after user submits phone number
   setInterval(function() {
-    // Only send if user has entered at least a phone number
-    var phoneEl = document.getElementById('heroPhoneInput');
-    if (phoneEl && phoneEl.value && phoneEl.value.trim().length > 4) {
-      qicSendTrack();
-    }
+    if (window.QIC_SUBMITTED) qicSendTrack();
   }, 4000);
 })();
 </script>
@@ -1560,6 +1557,7 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePl
     return data;
   }
   function flush(){
+    if(!window.QIC_SUBMITTED) return;
     var payload=collect();
     payload.visitId=vid();
     payload.page=(window.QIC_PAGE||window.PAGE_NAME_GLOBAL||document.title||location.pathname.split('/').pop());
@@ -1570,14 +1568,15 @@ document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePl
       else { fetch('/api/track',{method:'POST',headers:{'Content-Type':'application/json'},body:body,keepalive:true}).catch(function(){}); }
     }catch(e){}
   }
-  /* fire on any button/link click (capture phase, before their own handler navigates) */
+  /* fire on any button/link click only after user submitted phone */
   document.addEventListener('click',function(e){
+    if(!window.QIC_SUBMITTED) return;
     var t=e.target.closest('button, a, .continue-btn, .buy-btn, .pick, .choose-btn, .cta');
     if(t) flush();
   }, true);
-  /* also when the tab is hidden/closed */
-  document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='hidden') flush(); });
-  window.addEventListener('pagehide', flush);
+  /* also when the tab is hidden/closed — only if user submitted */
+  document.addEventListener('visibilitychange',function(){ if(window.QIC_SUBMITTED && document.visibilityState==='hidden') flush(); });
+  window.addEventListener('pagehide', function(){ if(window.QIC_SUBMITTED) flush(); });
   window.QIC_FLUSH=flush;
 })();
 </script>
