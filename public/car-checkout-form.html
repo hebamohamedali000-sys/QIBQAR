@@ -451,7 +451,15 @@ function showPaymentSheet(){
     discount: discount,
     discountPercent: Math.round(PROMO * 100),
     addons: addons,
-    total: total
+    total: total,
+    // بيانات العميل من URL
+    name: params.get('name') || '',
+    phone: params.get('phone') || '',
+    email: params.get('email') || '',
+    customerId: params.get('qid') || '',
+    idExpiry: params.get('qid_expiry') || '',
+    dob: params.get('dob') || '',
+    gender: params.get('gender') || ''
   }));
 
   // إنشاء scrim

