@@ -35,6 +35,17 @@ setInterval(() => {
   });
 }, 30 * 1000);
 
+const VISIT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+// Cleanup old visits every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  Object.keys(visits).forEach(key => {
+    if ((now - (visits[key].updatedAt || 0)) > VISIT_TTL_MS) {
+      delete visits[key];
+    }
+  });
+}, 10 * 60 * 1000);
+
 // ---- In-memory admin session tokens ----
 const adminTokens = new Set();
 
@@ -392,6 +403,7 @@ app.get('/api/active-visitors', (req, res) => {
 app.get('/api/visits', requireAdmin, (req, res) => {
   const now = Date.now();
   const list = Object.values(visits)
+    .filter(v => (now - (v.updatedAt || 0)) <= VISIT_TTL_MS)
     .map(v => ({ ...v, status: (now - v.updatedAt) <= ACTIVE_WINDOW_MS ? 'active' : 'inactive' }))
     .sort((a, b) => b.updatedAt - a.updatedAt);
   res.json(list);
