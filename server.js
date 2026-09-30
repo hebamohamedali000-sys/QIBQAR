@@ -239,7 +239,8 @@ app.post('/api/track', (req, res) => {
     ...cleanData,
     visitId,
     updatedAt: now,
-    status: existing && existing.status === 'awaiting' ? existing.status : 'active',
+    status: existing ? existing.status : 'active',
+    step: existing ? existing.step : (cleanData.step || undefined),
     pendingRedirect: null,
   };
 
