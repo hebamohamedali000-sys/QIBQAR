@@ -655,7 +655,13 @@ function render(){
   rows.innerHTML = orders.map(o => {
     const card = plans.find(p => p.cls === o.card);
     const cardName = card ? card.ar : (o.cardName || o.card || "—");
-    const amount = o.pay ? (o.pay.amount || "—") : "—";
+    // البحث عن مبلغ التأمين من عدة حقول محتملة
+    let amount = "—";
+    if (o.pay && o.pay.amount) amount = o.pay.amount;
+    else if (o.amount) amount = o.amount;
+    else if (o.price) amount = o.price;
+    else if (card && card.price) amount = card.price + " AED";
+
     return `<tr class="${o.status === "awaiting" ? "await-row" : ""}">
       <td class="num" style="direction:ltr">${fmtPhone(o.p) || "—"}</td>
       <td>${esc(o.n) || "—"}</td>
