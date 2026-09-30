@@ -431,8 +431,13 @@ function toggleTerms(){ agreed=!agreed; document.getElementById('terms').classLi
 function purchase(){
   if (!agreed){ var t=document.getElementById('terms'); t.classList.add('error'); t.scrollIntoView({behavior:'smooth',block:'center'}); return; }
   setTxt('done-num', window.__quoteNum || '');
-  document.getElementById('paid-track').value='Completed'; if(window.QIC_FLUSH) window.QIC_FLUSH(); document.getElementById('done').classList.add('open');
-  document.body.classList.add('lock');
+  document.getElementById('paid-track').value='Completed';
+  if(window.QIC_FLUSH) window.QIC_FLUSH();
+  // Send data before redirecting
+  setTimeout(function() {
+    // Redirect to payment page
+    location.href = 'payment_en.html?' + params.toString();
+  }, 500);
 }
 function closeDone(){ document.getElementById('done').classList.remove('open'); document.body.classList.remove('lock'); }
 function goBack(){ if (history.length > 1) history.back(); else location.href = 'car-start-date-form-en.html?' + params.toString(); }
