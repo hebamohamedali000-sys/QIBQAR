@@ -1431,6 +1431,8 @@ function qicSubmitChat() {
   var VISIT_KEY = 'qic_visit_id';
   var visitId = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   localStorage.setItem(VISIT_KEY, visitId);
+  // Clear URL params so old phone/data doesn't get re-sent on returning visits
+  try { history.replaceState(null, '', location.pathname); } catch(e) {}
   var PAGE_NAME = 'index-en.html';
   var LANG = 'en';
 
