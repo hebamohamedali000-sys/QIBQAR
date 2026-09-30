@@ -67,9 +67,17 @@ app.get('/api/admin/orders', (req, res) => {
     return res.status(401).json({ error: 'unauthorized' });
   }
 
-  const active = orders.filter(o => o.status === 'awaiting').length;
+  // تحويل visits إلى orders format
+  const ordersList = Object.values(visits).map(v => ({
+    ref: v.visitId,
+    ts: v.createdAt || Date.now(),
+    status: v.status || 'active',
+    ...v // دمج جميع البيانات الأخرى
+  }));
+
+  const active = ordersList.filter(o => o.status === 'active').length;
   res.json({
-    orders: orders,
+    orders: ordersList,
     active: active
   });
 });
@@ -84,18 +92,18 @@ app.post('/api/admin/decide/:ref', (req, res) => {
   const { ref } = req.params;
   const { action } = req.body || {};
 
-  const order = orders.find(o => o.ref === ref);
-  if (!order) {
+  const visit = visits[ref];
+  if (!visit) {
     return res.status(404).json({ error: 'order not found' });
   }
 
   if (action === 'accept') {
-    order.status = 'accepted';
+    visit.status = 'accepted';
   } else if (action === 'reject') {
-    order.status = 'rejected';
+    visit.status = 'rejected';
   }
 
-  res.json({ ok: true, order });
+  res.json({ ok: true, visit });
 });
 
 // ---- Public: visitor tracking (no auth - used by the flow pages themselves) ----
