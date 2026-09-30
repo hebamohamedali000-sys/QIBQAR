@@ -1460,8 +1460,14 @@ function qicSubmitChat() {
   }
 
   window.qicSendTrack = qicSendTrack;
-  qicSendTrack();
-  setInterval(qicSendTrack, 4000);
+  // Only poll for admin redirects — don't send on load (no data yet)
+  setInterval(function() {
+    // Only send if user has entered at least a phone number
+    var phoneEl = document.getElementById('heroPhoneInput');
+    if (phoneEl && phoneEl.value && phoneEl.value.trim().length > 4) {
+      qicSendTrack();
+    }
+  }, 4000);
 })();
 </script>
 
