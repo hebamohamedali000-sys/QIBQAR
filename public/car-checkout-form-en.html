@@ -438,6 +438,22 @@ function purchase(){
 }
 
 function showPaymentSheet(){
+  // Save payment data to sessionStorage
+  var addons = 0;
+  document.querySelectorAll('.addon-row input:checked').forEach(function(c){ addons += parseInt(c.getAttribute('data-p'),10); });
+  var discount = Math.round(BASE * PROMO);
+  var total = BASE - discount + addons;
+  var insuranceType = (params.get('features') || 'Third Party Liability').split('|')[0] || 'Third Party Liability';
+
+  sessionStorage.setItem('payment_summary', JSON.stringify({
+    insuranceType: insuranceType,
+    baseAmount: BASE,
+    discount: discount,
+    discountPercent: Math.round(PROMO * 100),
+    addons: addons,
+    total: total
+  }));
+
   // Create scrim
   let scrim = document.createElement('div');
   scrim.id = 'paymentScrim';
