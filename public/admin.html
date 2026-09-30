@@ -417,7 +417,11 @@ body.pop-open{overflow:hidden}
       <div class="stat"><div class="n num" id="stFees">0 AED</div><div class="l">إجمالي الرسوم</div></div>
     </div>
 
-    <div class="table-wrap">
+    <div id="emptyState" style="display:none; text-align:center; padding:60px 20px; color:var(--muted); font-size:1rem; background:var(--surface); border:1px solid var(--line); border-radius:18px;">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.35; margin-bottom:14px; display:block; margin-inline:auto"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+      لا توجد طلبات بعد. سيظهر الطلب هنا فور ضغط العميل على تأكيد ومتابعة.
+    </div>
+    <div id="tableWrap" class="table-wrap" style="display:none;">
       <div class="tscroll">
         <table>
           <thead>
@@ -669,10 +673,16 @@ function render(){
   if (q) orders = orders.filter(o => (o.n||"").toLowerCase().includes(q) || (o.p||"").includes(q.replace(/\D/g,"")));
 
   const rows = $("rows");
+  const tableWrap = $("tableWrap");
+  const emptyState = $("emptyState");
   if (!orders.length){
-    rows.innerHTML = `<tr class="empty-row"><td colspan="5">${q ? "لا توجد نتائج مطابقة للبحث." : "لا توجد طلبات بعد. سيظهر الطلب هنا فور ضغط العميل على تأكيد ومتابعة."}</td></tr>`;
+    tableWrap.style.display = "none";
+    emptyState.style.display = q ? "none" : "block";
+    if (q) rows.innerHTML = `<tr class="empty-row"><td colspan="6">لا توجد نتائج مطابقة للبحث.</td></tr>`;
     return;
   }
+  tableWrap.style.display = "block";
+  emptyState.style.display = "none";
   rows.innerHTML = orders.map(o => {
     const amount = o.pay && o.pay.amount ? `${o.pay.amount} ${o.pay.currency || 'SAR'}` : "—";
     return `<tr class="${o.status === "awaiting" ? "await-row" : ""}">
